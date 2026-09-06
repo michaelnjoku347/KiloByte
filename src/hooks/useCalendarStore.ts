@@ -22,7 +22,7 @@ export function useCalendarStore() {
   const [firedReminders, setFiredReminders] = useState<FiredReminder[]>(
     initial.firedReminders,
   )
-  const [hydrated, setHydrated] = useState(true)
+  const [hydrated] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
