@@ -16,18 +16,21 @@ import { eventsToAssignments, fetchIcsText, parseIcs } from '../lib/ics'
 import type { ReminderOffset } from '../types'
 
 export function useCalendarStore() {
-  const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [settings, setSettings] = useState<AppSettings>(() => loadState().settings)
-  const [firedReminders, setFiredReminders] = useState<FiredReminder[]>([])
-  const [hydrated, setHydrated] = useState(false)
+  const initial = loadState()
+  const [assignments, setAssignments] = useState<Assignment[]>(initial.assignments)
+  const [settings, setSettings] = useState<AppSettings>(initial.settings)
+  const [firedReminders, setFiredReminders] = useState<FiredReminder[]>(
+    initial.firedReminders,
+  )
+  const [hydrated, setHydrated] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
+    // Re-sync from storage once on mount in case another tab wrote first.
     const state = loadState()
     setAssignments(state.assignments)
     setSettings(state.settings)
     setFiredReminders(state.firedReminders)
-    setHydrated(true)
   }, [])
 
   useEffect(() => {
