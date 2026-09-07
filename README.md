@@ -1,6 +1,15 @@
 # Syllabus
 
-High-end academic deadline calendar for Farmingdale State College coursework across **Brightspace**, **Cengage**, **Zybooks**, and **VHL Central**.
+Local-first academic deadline calendar for Farmingdale State College coursework across **Brightspace**, **Cengage**, **Zybooks**, and **VHL Central**.
+
+## What this is (and is not)
+
+- A calendar UI with Quick Add, filters, and reminders
+- Brightspace support via **uploaded `.ics` files**
+- Demo deadlines on first launch (fake sample courses — not live campus data)
+- **Not** a scraper: nothing logs into Brightspace, Cengage, Zybooks, or VHL
+
+Browser notifications only fire while this tab is open. For phone alerts, **Export ICS** and import that file into Google Calendar or Apple Calendar.
 
 ## Run
 
@@ -9,32 +18,26 @@ npm install
 npm run dev
 ```
 
-Open the local URL Vite prints (usually `http://localhost:5173`).
+## Scripts
 
-## Features
-
-- Month, week, and agenda views
-- Color-coded sources for each platform
-- Quick-add assignments with course, due time, notes, and link
-- Reminder offsets (1 week / 3 days / 1 day / 1 hour / at due time)
-- Browser notifications while the app tab is open
-- ICS import via Brightspace calendar feed URL or `.ics` file upload
-- Local-only storage in your browser (no account required)
+```bash
+npm run build   # typecheck + production build
+npm run test    # unit tests
+npm run lint
+npm run smoke   # optional headed browser smoke (needs Chromium via puppeteer)
+```
 
 ## Syncing platforms
 
-| Platform | How to get deadlines into Syllabus |
+| Platform | How |
 | --- | --- |
-| Brightspace (FSC) | Calendar → Subscribe / export ICS → Import ICS in Syllabus |
-| Cengage | Quick Add with source set to Cengage |
-| Zybooks | Quick Add with source set to Zybooks |
-| VHL Central | Quick Add with source set to VHL |
+| Brightspace (FSC) | Calendar → download/export `.ics` → **Sync → Upload** |
+| Cengage / Zybooks / VHL | **Quick Add** |
+| Phone reminders | **Export ICS** → import into Google/Apple Calendar |
+| Backup | **Backup JSON** / restore from Sync |
 
-Automated login scraping of those sites is intentionally not included. Use official ICS exports where available, and Quick Add for the rest.
+Pasting a Brightspace ICS *URL* usually fails because browsers block cross-origin calendar feeds (CORS). File upload is the supported path.
 
-## Build
+## Privacy
 
-```bash
-npm run build
-npm run preview
-```
+All data stays in `localStorage` on your device unless you export it.

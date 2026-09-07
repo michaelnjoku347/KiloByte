@@ -225,12 +225,18 @@ export function ImportDrawer({
   onClose,
   onImportFile,
   onImportUrl,
+  onImportBackup,
+  onExportIcs,
+  onExportBackup,
   savedUrl,
 }: {
   open: boolean
   onClose: () => void
   onImportFile: (text: string, source: SourceId, course: string) => void
   onImportUrl: (url: string, source: SourceId, course: string) => Promise<unknown>
+  onImportBackup: (text: string) => void
+  onExportIcs: () => void
+  onExportBackup: () => void
   savedUrl?: string
 }) {
   const [source, setSource] = useState<SourceId>('brightspace')
@@ -238,11 +244,13 @@ export function ImportDrawer({
   const [url, setUrl] = useState(savedUrl ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showAdvancedUrl, setShowAdvancedUrl] = useState(false)
 
   useEffect(() => {
     if (open) {
       setUrl(savedUrl ?? '')
       setError(null)
+      setShowAdvancedUrl(false)
     }
   }, [open, savedUrl])
 
@@ -250,11 +258,16 @@ export function ImportDrawer({
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
-      <div className="modal import-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal import-modal"
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className="modal-head">
           <div>
             <p className="eyebrow">Sync</p>
-            <h2>Import from your platforms</h2>
+            <h2>Import & export</h2>
           </div>
           <button type="button" className="icon-btn" aria-label="Close" onClick={onClose}>
             ×
@@ -262,10 +275,26 @@ export function ImportDrawer({
         </header>
 
         <div className="modal-form">
+          <div className="sync-tip">
+            <strong>Phone reminders</strong>
+            <p>
+              Browser notifications only work while this tab is open. Export an ICS file and
+              import it into Google Calendar or Apple Calendar for alerts on your phone.
+            </p>
+            <div className="modal-actions" style={{ marginTop: '0.65rem' }}>
+              <button type="button" className="primary-btn" onClick={onExportIcs}>
+                Export ICS for Google/Apple
+              </button>
+              <button type="button" className="ghost-btn" onClick={onExportBackup}>
+                Backup JSON
+              </button>
+            </div>
+          </div>
+
           <p className="lead">
-            Brightspace (Farmingdale) exposes an ICS calendar feed. Paste that URL or upload a
-            <code>.ics</code> export. For Cengage, Zybooks, and VHL Central, use Quick Add — those
-            platforms do not offer a reliable public calendar API.
+            Brightspace: download a <code>.ics</code> from Calendar, then upload it below.
+            Pasting a feed URL usually fails in the browser because of CORS. Cengage, Zybooks,
+            and VHL Central need Quick Add.
           </p>
 
           <label>
@@ -284,21 +313,11 @@ export function ImportDrawer({
             <input value={course} onChange={(e) => setCourse(e.target.value)} />
           </label>
 
-          <label>
-            ICS feed URL
-            <input
-              type="url"
-              value={url}
-              placeholder="https://brightspace.farmingdale.edu/..."
-              onChange={(e) => setUrl(e.target.value)}
-            />
-          </label>
-
           {error && <p className="form-error">{error}</p>}
 
           <div className="modal-actions">
-            <label className="ghost-btn file-btn">
-              Upload .ics
+            <label className="primary-btn file-btn">
+              Upload Brightspace .ics
               <input
                 type="file"
                 accept=".ics,text/calendar"
@@ -312,34 +331,74 @@ export function ImportDrawer({
                 }}
               />
             </label>
-            <div className="spacer" />
-            <button type="button" className="ghost-btn" onClick={onClose}>
-              Close
-            </button>
-            <button
-              type="button"
-              className="primary-btn"
-              disabled={!url || busy}
-              onClick={async () => {
-                setBusy(true)
-                setError(null)
-                try {
-                  await onImportUrl(url, source, course)
-                  onClose()
-                } catch (err) {
-                  setError(
-                    err instanceof Error
-                      ? `${err.message} If the feed blocks the browser, download the .ics and upload it instead.`
-                      : 'Import failed',
-                  )
-                } finally {
-                  setBusy(false)
-                }
-              }}
-            >
-              {busy ? 'Importing…' : 'Import URL'}
-            </button>
+            <label className="ghost-btn file-btn">
+              Restore backup JSON
+              <input
+                type="file"
+                accept=".json,application/json"
+                hidden
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  try {
+                    const text = await file.text()
+                    onImportBackup(text)
+                    onClose()
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'Backup restore failed')
+                  }
+                }}
+              />
+            </label>
           </div>
+
+          <button
+            type="button"
+            className="ghost-btn full"
+            onClick={() => setShowAdvancedUrl((v) => !v)}
+          >
+            {showAdvancedUrl ? 'Hide URL import' : 'Advanced: try ICS URL (often blocked)'}
+          </button>
+
+          {showAdvancedUrl && (
+            <>
+              <label>
+                ICS feed URL
+                <input
+                  type="url"
+                  value={url}
+                  placeholder="https://brightspace.farmingdale.edu/..."
+                  onChange={(e) => setUrl(e.target.value)}
+                />
+              </label>
+              <div className="modal-actions">
+                <div className="spacer" />
+                <button
+                  type="button"
+                  className="ghost-btn"
+                  disabled={!url || busy}
+                  onClick={async () => {
+                    setBusy(true)
+                    setError(null)
+                    try {
+                      await onImportUrl(url, source, course)
+                      onClose()
+                    } catch (err) {
+                      setError(
+                        err instanceof Error
+                          ? err.message
+                          : 'Import failed — upload the .ics file instead.',
+                      )
+                    } finally {
+                      setBusy(false)
+                    }
+                  }}
+                >
+                  {busy ? 'Importing…' : 'Try URL import'}
+                </button>
+              </div>
+            </>
+          )}
 
           <div className="sync-tips">
             {SOURCE_ORDER.map((id) => (
@@ -348,6 +407,13 @@ export function ImportDrawer({
                 <p>{SOURCES[id].tip}</p>
               </div>
             ))}
+          </div>
+
+          <div className="modal-actions">
+            <div className="spacer" />
+            <button type="button" className="ghost-btn" onClick={onClose}>
+              Close
+            </button>
           </div>
         </div>
       </div>

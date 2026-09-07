@@ -1,42 +1,58 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { Assignment, AppSettings, FiredReminder, SourceId } from '../types'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Assignment, AppSettings, AppState, FiredReminder, SourceId } from '../types'
 import {
   loadState,
   rememberFired,
   saveState,
   uid,
   upsertAssignment,
+  exportBackupJson,
+  parseBackupJson,
+  STORAGE_KEY,
 } from '../lib/storage'
 import {
   ensureNotificationPermission,
   getDueReminders,
   showAssignmentNotification,
 } from '../lib/reminders'
-import { eventsToAssignments, fetchIcsText, parseIcs } from '../lib/ics'
+import {
+  eventsToAssignments,
+  fetchIcsText,
+  parseIcs,
+  assignmentsToIcs,
+} from '../lib/ics'
 import type { ReminderOffset } from '../types'
+import { downloadTextFile } from '../lib/download'
 
 export function useCalendarStore() {
-  const initial = loadState()
-  const [assignments, setAssignments] = useState<Assignment[]>(initial.assignments)
-  const [settings, setSettings] = useState<AppSettings>(initial.settings)
-  const [firedReminders, setFiredReminders] = useState<FiredReminder[]>(
-    initial.firedReminders,
-  )
-  const [hydrated, setHydrated] = useState(true)
+  const [state, setState] = useState<AppState>(() => loadState())
   const [toast, setToast] = useState<string | null>(null)
+  const skipNextSave = useRef(false)
+
+  const { assignments, settings, firedReminders } = state
 
   useEffect(() => {
-    // Re-sync from storage once on mount in case another tab wrote first.
-    const state = loadState()
-    setAssignments(state.assignments)
-    setSettings(state.settings)
-    setFiredReminders(state.firedReminders)
+    if (skipNextSave.current) {
+      skipNextSave.current = false
+      return
+    }
+    saveState(state)
+  }, [state])
+
+  // Keep multiple tabs in sync without re-parsing on every render.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY || event.newValue == null) return
+      try {
+        skipNextSave.current = true
+        setState(loadState())
+      } catch {
+        // ignore malformed writes from other tabs
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [])
-
-  useEffect(() => {
-    if (!hydrated) return
-    saveState({ assignments, settings, firedReminders })
-  }, [assignments, settings, firedReminders, hydrated])
 
   useEffect(() => {
     if (!toast) return
@@ -46,8 +62,45 @@ export function useCalendarStore() {
 
   const flash = useCallback((message: string) => setToast(message), [])
 
+  const setAssignments = useCallback(
+    (updater: Assignment[] | ((prev: Assignment[]) => Assignment[])) => {
+      setState((prev) => ({
+        ...prev,
+        assignments:
+          typeof updater === 'function' ? updater(prev.assignments) : updater,
+      }))
+    },
+    [],
+  )
+
+  const setSettings = useCallback(
+    (updater: AppSettings | ((prev: AppSettings) => AppSettings)) => {
+      setState((prev) => ({
+        ...prev,
+        settings:
+          typeof updater === 'function' ? updater(prev.settings) : updater,
+      }))
+    },
+    [],
+  )
+
+  const setFiredReminders = useCallback(
+    (updater: FiredReminder[] | ((prev: FiredReminder[]) => FiredReminder[])) => {
+      setState((prev) => ({
+        ...prev,
+        firedReminders:
+          typeof updater === 'function' ? updater(prev.firedReminders) : updater,
+      }))
+    },
+    [],
+  )
+
   const addAssignment = useCallback(
-    (partial: Omit<Assignment, 'id' | 'createdAt' | 'updatedAt' | 'completed'> & { completed?: boolean }) => {
+    (
+      partial: Omit<Assignment, 'id' | 'createdAt' | 'updatedAt' | 'completed'> & {
+        completed?: boolean
+      },
+    ) => {
       const now = new Date().toISOString()
       const assignment: Assignment = {
         ...partial,
@@ -60,7 +113,7 @@ export function useCalendarStore() {
       flash('Assignment added')
       return assignment
     },
-    [flash],
+    [flash, setAssignments],
   )
 
   const updateAssignment = useCallback(
@@ -75,7 +128,7 @@ export function useCalendarStore() {
         })
       })
     },
-    [],
+    [setAssignments],
   )
 
   const deleteAssignment = useCallback(
@@ -84,25 +137,32 @@ export function useCalendarStore() {
       setFiredReminders((prev) => prev.filter((f) => f.assignmentId !== id))
       flash('Assignment removed')
     },
-    [flash],
+    [flash, setAssignments, setFiredReminders],
   )
 
-  const toggleComplete = useCallback((id: string) => {
-    setAssignments((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? { ...a, completed: !a.completed, updatedAt: new Date().toISOString() }
-          : a,
-      ),
-    )
-  }, [])
+  const toggleComplete = useCallback(
+    (id: string) => {
+      setAssignments((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? { ...a, completed: !a.completed, updatedAt: new Date().toISOString() }
+            : a,
+        ),
+      )
+    },
+    [setAssignments],
+  )
 
   const enableNotifications = useCallback(async () => {
     const ok = await ensureNotificationPermission()
     setSettings((s) => ({ ...s, notificationsEnabled: ok }))
-    flash(ok ? 'Browser reminders enabled' : 'Notification permission blocked')
+    flash(
+      ok
+        ? 'Browser reminders on (only while this tab is open). Export ICS for phone alerts.'
+        : 'Notification permission blocked',
+    )
     return ok
-  }, [flash])
+  }, [flash, setSettings])
 
   const importIcsText = useCallback(
     (
@@ -116,22 +176,24 @@ export function useCalendarStore() {
         flash('No events found in that calendar file')
         return { added: 0, updated: 0 }
       }
-      const current = assignments
-      const { added, updated, merged } = eventsToAssignments(
-        events,
-        source,
-        course,
-        reminders ?? settings.defaultReminders,
-        current,
-      )
-      setAssignments(merged)
-      const result = { added: added.length, updated: updated.length }
+      let result = { added: 0, updated: 0 }
+      setAssignments((prev) => {
+        const { added, updated, merged } = eventsToAssignments(
+          events,
+          source,
+          course,
+          reminders ?? settings.defaultReminders,
+          prev,
+        )
+        result = { added: added.length, updated: updated.length }
+        return merged
+      })
       flash(
         `Imported ${result.added} new · updated ${result.updated} from ${source}`,
       )
       return result
     },
-    [assignments, flash, settings.defaultReminders],
+    [flash, setAssignments, settings.defaultReminders],
   )
 
   const importIcsUrl = useCallback(
@@ -143,23 +205,56 @@ export function useCalendarStore() {
       }))
       return importIcsText(text, source, course)
     },
-    [importIcsText],
+    [importIcsText, setSettings],
+  )
+
+  const exportIcsFile = useCallback(() => {
+    const open = assignments.filter((a) => !a.completed)
+    if (open.length === 0) {
+      flash('No open deadlines to export')
+      return
+    }
+    const ics = assignmentsToIcs(open)
+    downloadTextFile(
+      `syllabus-deadlines-${new Date().toISOString().slice(0, 10)}.ics`,
+      ics,
+      'text/calendar;charset=utf-8',
+    )
+    flash('ICS downloaded — import it into Google/Apple Calendar for phone reminders')
+  }, [assignments, flash])
+
+  const exportBackup = useCallback(() => {
+    downloadTextFile(
+      `syllabus-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      exportBackupJson(state),
+      'application/json;charset=utf-8',
+    )
+    flash('Backup JSON downloaded')
+  }, [flash, state])
+
+  const importBackupText = useCallback(
+    (text: string) => {
+      const next = parseBackupJson(text)
+      skipNextSave.current = false
+      setState(next)
+      flash(`Restored ${next.assignments.length} assignments from backup`)
+    },
+    [flash],
   )
 
   const resetDemoData = useCallback(() => {
-    const state = loadState()
-    // Force reseed by clearing and using seed from a fresh default
-    localStorage.removeItem('syllabus.calendar.v1')
+    const notificationsEnabled = settings.notificationsEnabled
+    localStorage.removeItem(STORAGE_KEY)
     const fresh = loadState()
-    setAssignments(fresh.assignments)
-    setSettings({ ...fresh.settings, notificationsEnabled: state.settings.notificationsEnabled })
-    setFiredReminders([])
+    setState({
+      ...fresh,
+      settings: { ...fresh.settings, notificationsEnabled },
+    })
     flash('Demo deadlines restored')
-  }, [flash])
+  }, [flash, settings.notificationsEnabled])
 
-  // Reminder ticker
   useEffect(() => {
-    if (!hydrated || !settings.notificationsEnabled) return
+    if (!settings.notificationsEnabled) return
 
     const tick = () => {
       const due = getDueReminders(assignments, firedReminders)
@@ -181,7 +276,7 @@ export function useCalendarStore() {
     tick()
     const id = window.setInterval(tick, 30_000)
     return () => window.clearInterval(id)
-  }, [assignments, firedReminders, hydrated, settings.notificationsEnabled])
+  }, [assignments, firedReminders, setFiredReminders, settings.notificationsEnabled])
 
   const stats = useMemo(() => {
     const open = assignments.filter((a) => !a.completed)
@@ -200,7 +295,6 @@ export function useCalendarStore() {
     toast,
     flash,
     stats,
-    hydrated,
     addAssignment,
     updateAssignment,
     deleteAssignment,
@@ -208,6 +302,9 @@ export function useCalendarStore() {
     enableNotifications,
     importIcsText,
     importIcsUrl,
+    exportIcsFile,
+    exportBackup,
+    importBackupText,
     resetDemoData,
   }
 }

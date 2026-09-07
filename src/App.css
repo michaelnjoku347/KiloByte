@@ -374,10 +374,12 @@
 
 .tips-panel {
   padding: 1rem 1.1rem 1.1rem;
+  display: grid;
+  gap: 0.55rem;
 }
 
 .tips-panel ol {
-  margin: 0.75rem 0 1rem;
+  margin: 0.35rem 0 0.35rem;
   padding-left: 1.15rem;
   color: var(--ink-soft);
   display: grid;
