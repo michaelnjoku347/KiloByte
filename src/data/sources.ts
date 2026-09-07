@@ -7,7 +7,7 @@ export const SOURCES: Record<SourceId, SourceMeta> = {
     shortLabel: 'Brightspace',
     color: '#1a6bb5',
     soft: 'rgba(26, 107, 181, 0.14)',
-    tip: 'In Brightspace: Calendar → Subscribe → copy the ICS feed URL, then paste it under Import.',
+    tip: 'In Brightspace: open Calendar → export/download .ics, then upload that file in Syllabus (URL paste usually fails due to CORS).',
   },
   cengage: {
     id: 'cengage',
@@ -31,7 +31,7 @@ export const SOURCES: Record<SourceId, SourceMeta> = {
     shortLabel: 'VHL',
     color: '#8a3d55',
     soft: 'rgba(138, 61, 85, 0.14)',
-    tip: 'From VHL Central activities, add each graded submission with its due time for push reminders.',
+    tip: 'From VHL Central activities, Quick Add each graded submission with its due time.',
   },
   other: {
     id: 'other',

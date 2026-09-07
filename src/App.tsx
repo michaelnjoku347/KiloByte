@@ -122,7 +122,10 @@ function App() {
             />
           </label>
           <button type="button" className="ghost-btn" onClick={() => setImportOpen(true)}>
-            Import ICS
+            Sync
+          </button>
+          <button type="button" className="ghost-btn" onClick={() => store.exportIcsFile()}>
+            Export ICS
           </button>
           <button
             type="button"
@@ -235,10 +238,13 @@ function App() {
           <section className="panel side-panel tips-panel">
             <h2 className="panel-title">How sync works</h2>
             <ol>
-              <li>Import Brightspace ICS for auto dates.</li>
+              <li>Upload a Brightspace <code>.ics</code> file (not the URL).</li>
               <li>Quick-add Cengage, Zybooks, and VHL.</li>
-              <li>Enable browser reminders once.</li>
+              <li>Export ICS to Google/Apple for phone reminders.</li>
             </ol>
+            <button type="button" className="ghost-btn full" onClick={store.exportIcsFile}>
+              Export ICS for phone
+            </button>
             <button type="button" className="ghost-btn full" onClick={store.resetDemoData}>
               Restore demo deadlines
             </button>
@@ -292,7 +298,7 @@ function App() {
       </div>
 
       <footer className="footer">
-        <span>Syllabus keeps deadlines local in your browser.</span>
+        <span>Local browser storage · export ICS/JSON to keep a copy</span>
         <span>{format(new Date(), 'EEEE, MMM d')}</span>
       </footer>
 
@@ -334,6 +340,9 @@ function App() {
         onImportUrl={(url, source, course) =>
           store.importIcsUrl(url, source, course)
         }
+        onImportBackup={(text) => store.importBackupText(text)}
+        onExportIcs={() => store.exportIcsFile()}
+        onExportBackup={() => store.exportBackup()}
       />
     </div>
   )
