@@ -1,51 +1,80 @@
-export type SourceId =
-  | 'brightspace'
-  | 'cengage'
-  | 'zybooks'
-  | 'vhl'
-  | 'other'
+export type Genre =
+  | 'collector'
+  | 'shooter'
+  | 'dodge'
+  | 'snake'
+  | 'breakout'
+  | 'platformer'
+  | 'survive'
 
-export type ViewMode = 'month' | 'week' | 'agenda'
+export type Shape = 'square' | 'circle' | 'triangle' | 'ship' | 'diamond'
 
-export type ReminderOffset = 0 | 60 | 1440 | 4320 | 10080
+export type Behavior = 'chase' | 'drift' | 'bounce' | 'swoop'
 
-export interface Assignment {
+export type GoalKind = 'score' | 'survive' | 'collect' | 'clear'
+
+export type Palette = {
+  bg: string
+  paper: string
+  accent: string
+  player: string
+  enemy: string
+  loot: string
+}
+
+export type GameSpec = {
+  v: 1
   id: string
   title: string
-  course: string
-  source: SourceId
-  dueAt: string
-  notes: string
-  completed: boolean
-  reminderOffsets: ReminderOffset[]
-  url?: string
+  author: string
+  prompt: string
+  blurb: string
   createdAt: string
-  updatedAt: string
+  genre: Genre
+  theme: string
+  seed: number
+  house?: boolean
+  palette: Palette
+  player: {
+    shape: Shape
+    speed: number
+    size: number
+    hp: number
+  }
+  world: {
+    wrap: boolean
+    gravity: number
+    stars: boolean
+  }
+  goal: {
+    kind: GoalKind
+    target: number
+    seconds: number
+  }
+  swarm: {
+    count: number
+    speed: number
+    behavior: Behavior
+  }
+  loot: {
+    count: number
+    value: number
+  }
 }
 
-export interface SourceMeta {
-  id: SourceId
-  label: string
-  shortLabel: string
-  color: string
-  soft: string
-  tip: string
+export type ArcadeSettings = {
+  author: string
+  geminiKey: string
 }
 
-export interface FiredReminder {
-  assignmentId: string
-  offset: ReminderOffset
-  firedAt: string
+export type ArcadeState = {
+  carts: GameSpec[]
+  settings: ArcadeSettings
 }
 
-export interface AppSettings {
-  notificationsEnabled: boolean
-  defaultReminders: ReminderOffset[]
-  icsUrls: Partial<Record<SourceId, string>>
-}
-
-export interface AppState {
-  assignments: Assignment[]
-  settings: AppSettings
-  firedReminders: FiredReminder[]
-}
+export type Route =
+  | { name: 'arcade' }
+  | { name: 'studio' }
+  | { name: 'why' }
+  | { name: 'play'; id: string }
+  | { name: 'share'; payload: string }

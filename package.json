@@ -1,5 +1,5 @@
 {
-  "name": "syllabus",
+  "name": "kilobyte-arcade",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -13,8 +13,6 @@
     "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
-    "date-fns": "^4.4.0",
-    "ical.js": "^2.2.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
