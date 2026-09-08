@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { compileCart, detectGenre, detectTheme, remixCart } from './generate'
-import { cartBytes, decodeCart, encodeCart, isGameSpec } from './cart'
+import { cartBytes, decodeCart, encodeCart, formatBytes, isGameSpec } from './cart'
 import { HOUSE_CARTS } from '../data/house'
 import { parseHash, toHash } from './route'
 import { arcadeWeight, emptyState, upsertCart } from './storage'
@@ -53,6 +53,12 @@ describe('prompt compiler', () => {
 })
 
 describe('cart codec', () => {
+  it('formats byte sizes in B, KB, and MB', () => {
+    expect(formatBytes(800)).toBe('800 B')
+    expect(formatBytes(1536)).toBe('1.5 KB')
+    expect(formatBytes(40 * 1024 * 1024)).toBe('40 MB')
+  })
+
   it('roundtrips through gzip share payload', async () => {
     const spec = compileCart({
       prompt: 'dungeon breakout lantern',
