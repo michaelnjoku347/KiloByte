@@ -39,7 +39,7 @@ export function PlayView({
     }
     await navigator.clipboard.writeText(`${location.origin}${location.pathname}${toGameHash(game.id)}`)
     setCopied(true)
-    flash('Dashboard link copied')
+    flash('Experience link copied')
   }
 
   const remix = () => {
@@ -53,7 +53,7 @@ export function PlayView({
     <div className="page play-page">
       <div className="play-head">
         <button type="button" className="ghost-btn" onClick={() => go({ name: 'game', id: game.id })}>
-          ← Dashboard
+          ← Experience
         </button>
         <div>
           <p className="eyebrow">

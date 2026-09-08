@@ -1,5 +1,79 @@
 import type { BrowseSort, GameRecord, SourceFilter } from '../types'
 
+export const CHART_GENRES = [
+  'Simulator',
+  'Shooter',
+  'Puzzle',
+  'Horror',
+  'Survival',
+  'Platformer',
+  'Racing',
+  'Rhythm',
+  'Strategy',
+  'Idle',
+  'Arcade',
+] as const
+
+export function visitScore(game: GameRecord, plays: Record<string, number>): number {
+  return (game.visits ?? 0) + (plays[game.id] ?? 0)
+}
+
+export function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1).replace(/\.0$/, '')}K`
+  return String(Math.round(n))
+}
+
+export function rankGames(games: GameRecord[], plays: Record<string, number>): GameRecord[] {
+  return [...games].sort((a, b) => {
+    const diff = visitScore(b, plays) - visitScore(a, plays)
+    return diff || b.createdAt.localeCompare(a.createdAt)
+  })
+}
+
+export type Rail = {
+  id: string
+  title: string
+  games: GameRecord[]
+}
+
+export function buildRails(
+  games: GameRecord[],
+  plays: Record<string, number>,
+  recents: string[],
+  mineIds: Set<string>,
+  favorites: string[] = [],
+): Rail[] {
+  const byId = new Map(games.map((g) => [g.id, g]))
+  const rails: Rail[] = []
+  const continued = recents.map((id) => byId.get(id)).filter((g): g is GameRecord => Boolean(g))
+  if (continued.length) rails.push({ id: 'continue', title: 'Continue', games: continued })
+  const liked = favorites.map((id) => byId.get(id)).filter((g): g is GameRecord => Boolean(g))
+  if (liked.length) rails.push({ id: 'favorites', title: 'Favorites', games: liked })
+  const recommended = rankGames(games, plays).slice(0, 12)
+  if (recommended.length) {
+    rails.push({ id: 'recommended', title: 'Recommended for you', games: recommended })
+  }
+  const upcoming = [...games].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10)
+  if (upcoming.length) rails.push({ id: 'upcoming', title: 'Up-and-coming', games: upcoming })
+  const mine = games.filter((g) => mineIds.has(g.id))
+  if (mine.length) rails.push({ id: 'yours', title: 'Your experiences', games: mine })
+  for (const genre of CHART_GENRES) {
+    const list = games.filter((g) => g.genres.some((x) => x.toLowerCase() === genre.toLowerCase()))
+    if (list.length) {
+      rails.push({ id: `genre-${genre}`, title: genre, games: rankGames(list, plays) })
+    }
+  }
+  return rails
+}
+
+export function featuredGame(
+  games: GameRecord[],
+  plays: Record<string, number>,
+): GameRecord | undefined {
+  return rankGames(games, plays)[0]
+}
+
 export type BrowseQuery = {
   query: string
   genres: string[]
@@ -35,7 +109,7 @@ export function filterGames(
   sorted.sort((a, b) => {
     if (q.sort === 'title') return a.title.localeCompare(b.title)
     if (q.sort === 'genre') return (a.genres[0] ?? '').localeCompare(b.genres[0] ?? '')
-    if (q.sort === 'played') return (plays[b.id] ?? 0) - (plays[a.id] ?? 0)
+    if (q.sort === 'played') return visitScore(b, plays) - visitScore(a, plays)
     return b.createdAt.localeCompare(a.createdAt)
   })
   return sorted

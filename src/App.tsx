@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react'
 import type { GameSpec } from './types'
 import { useCatalog } from './hooks/useCatalog'
 import { useHashRoute } from './hooks/useHashRoute'
-import { BrowsePage } from './components/BrowsePage'
+import { DiscoverPage } from './components/DiscoverPage'
+import { ChartsPage } from './components/ChartsPage'
 import { CreatePage } from './components/CreatePage'
 import { DashboardPage } from './components/DashboardPage'
 import { PlayView } from './components/PlayView'
 import { WhyPage } from './components/WhyPage'
-import { decodeCart, formatBytes, parseCartJson } from './lib/cart'
+import { decodeCart, parseCartJson } from './lib/cart'
 import { recordFromCart } from './lib/record'
 import { ensureGameWorker } from './lib/idb'
-import { go } from './lib/route'
+import { go, parseHash } from './lib/route'
 import './App.css'
 
 function SharedCart({
@@ -60,6 +61,10 @@ function SharedCart({
 function App() {
   const catalog = useCatalog()
   const route = useHashRoute()
+  const [q, setQ] = useState(() => {
+    const start = parseHash(typeof location === 'undefined' ? '' : location.hash)
+    return start.name === 'search' ? start.query : ''
+  })
 
   useEffect(() => {
     void ensureGameWorker()
@@ -67,6 +72,11 @@ function App() {
 
   const current =
     route.name === 'game' || route.name === 'play' ? catalog.find(route.id) : undefined
+
+  const play = (id: string) => {
+    catalog.bumpPlays(id)
+    go({ name: 'play', id })
+  }
 
   const onImportFile = async (file: File) => {
     try {
@@ -83,13 +93,13 @@ function App() {
     }
   }
 
+  const initials = catalog.settings.author.trim().slice(0, 1).toUpperCase() || 'A'
+
   return (
     <div className="shell">
-      <div className="grain" aria-hidden />
       <header className="topbar">
         <button type="button" className="wordmark" onClick={() => go({ name: 'arcade' })}>
           <span>Kilobyte</span>
-          <small>Arcade</small>
         </button>
         <nav className="nav">
           <button
@@ -97,7 +107,14 @@ function App() {
             className={route.name === 'arcade' ? 'on' : ''}
             onClick={() => go({ name: 'arcade' })}
           >
-            Arcade
+            Discover
+          </button>
+          <button
+            type="button"
+            className={route.name === 'charts' ? 'on' : ''}
+            onClick={() => go({ name: 'charts' })}
+          >
+            Charts
           </button>
           <button
             type="button"
@@ -114,8 +131,23 @@ function App() {
             Hosting
           </button>
         </nav>
+        <form
+          className="top-search"
+          onSubmit={(e) => {
+            e.preventDefault()
+            go({ name: 'search', query: q.trim() })
+          }}
+        >
+          <label>
+            <span className="sr-only">Search experiences</span>
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search experiences"
+            />
+          </label>
+        </form>
         <div className="top-meta">
-          <span className="pill">{formatBytes(catalog.bytes)}</span>
           <label className="import-btn">
             Import
             <input
@@ -129,18 +161,36 @@ function App() {
               }}
             />
           </label>
+          <span className="avatar" title={catalog.settings.author}>
+            {initials}
+          </span>
         </div>
       </header>
 
       <main>
         {route.name === 'arcade' && (
-          <BrowsePage
+          <DiscoverPage
             all={catalog.all}
             mineIds={catalog.mineIds}
             plays={catalog.plays}
-            bytes={catalog.bytes}
-            onRemove={(id) => void catalog.remove(id)}
+            recents={catalog.recents}
+            favorites={catalog.favorites}
+            onPlay={play}
           />
+        )}
+        {route.name === 'search' && (
+          <DiscoverPage
+            all={catalog.all}
+            mineIds={catalog.mineIds}
+            plays={catalog.plays}
+            recents={catalog.recents}
+            favorites={catalog.favorites}
+            searchQuery={route.query}
+            onPlay={play}
+          />
+        )}
+        {route.name === 'charts' && (
+          <ChartsPage all={catalog.all} plays={catalog.plays} genre={route.genre} onPlay={play} />
         )}
         {route.name === 'create' && (
           <CreatePage
@@ -159,14 +209,14 @@ function App() {
             all={catalog.all}
             plays={catalog.plays[current.id] ?? 0}
             mine={catalog.mineIds.has(current.id)}
+            favorited={catalog.favorites.includes(current.id)}
             onRemove={() => {
               void catalog.remove(current.id)
               go({ name: 'arcade' })
             }}
-            onPlay={() => {
-              catalog.bumpPlays(current.id)
-              go({ name: 'play', id: current.id })
-            }}
+            onPlay={() => play(current.id)}
+            onFavorite={() => catalog.toggleFavorite(current.id)}
+            onPlayOther={play}
           />
         )}
         {route.name === 'play' && current && (
@@ -181,7 +231,7 @@ function App() {
           />
         )}
         {(route.name === 'game' || route.name === 'play') && !current && (
-          <p className="empty pad">Game missing on this device. Upload it again or open the GitHub listing.</p>
+          <p className="empty pad">Experience missing on this device.</p>
         )}
         {route.name === 'share' && (
           <SharedCart
@@ -195,8 +245,8 @@ function App() {
       </main>
 
       <footer className="footer">
-        <span>Dashboards + GitHub + uploads · you do not host the binaries</span>
-        <span>{catalog.all.length} games</span>
+        <span>Discover · Charts · Create — files stay on GitHub or the creator’s machine</span>
+        <span>{catalog.all.length} experiences</span>
       </footer>
       {catalog.toast && (
         <div className="toast" role="status">

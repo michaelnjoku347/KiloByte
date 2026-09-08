@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS: ArcadeSettings = {
 }
 
 export function emptyState(): ArcadeState {
-  return { games: [], settings: DEFAULT_SETTINGS, plays: {} }
+  return { games: [], settings: DEFAULT_SETTINGS, plays: {}, recents: [], favorites: [] }
 }
 
 function migrateLegacy(): GameRecord[] {
@@ -31,7 +31,13 @@ export function loadState(): ArcadeState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) {
-      return { games: migrateLegacy(), settings: DEFAULT_SETTINGS, plays: {} }
+      return {
+        games: migrateLegacy(),
+        settings: DEFAULT_SETTINGS,
+        plays: {},
+        recents: [],
+        favorites: [],
+      }
     }
     const parsed = JSON.parse(raw) as Partial<ArcadeState> & { carts?: GameSpec[] }
     const fromV2 = Array.isArray(parsed.games) ? parsed.games : []
@@ -48,6 +54,10 @@ export function loadState(): ArcadeState {
         githubToken: parsed.settings?.githubToken ?? '',
       },
       plays: parsed.plays && typeof parsed.plays === 'object' ? parsed.plays : {},
+      recents: Array.isArray(parsed.recents) ? parsed.recents.filter((id) => typeof id === 'string') : [],
+      favorites: Array.isArray(parsed.favorites)
+        ? parsed.favorites.filter((id) => typeof id === 'string')
+        : [],
     }
   } catch {
     return emptyState()
@@ -61,6 +71,8 @@ export function saveState(state: ArcadeState): void {
       games: state.games,
       settings: state.settings,
       plays: state.plays,
+      recents: state.recents,
+      favorites: state.favorites,
     }),
   )
 }

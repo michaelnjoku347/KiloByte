@@ -12,6 +12,12 @@ export function parseHash(hash: string): Route {
   const head = parts[0]
   if (head === 'studio') return { name: 'create', tab: 'generate' }
   if (head === 'create') return { name: 'create', tab: createTab(parts[1]) }
+  if (head === 'charts') {
+    return { name: 'charts', genre: parts[1] ? decodeURIComponent(parts[1]) : undefined }
+  }
+  if (head === 'search') {
+    return { name: 'search', query: decodeURIComponent(parts.slice(1).join('/') || '') }
+  }
   if (head === 'why') return { name: 'why' }
   if (head === 'game' && parts[1]) return { name: 'game', id: parts[1] }
   if (head === 'play' && parts[1]) return { name: 'play', id: parts[1] }
@@ -23,6 +29,10 @@ export function toHash(route: Route): string {
   switch (route.name) {
     case 'create':
       return `#/create/${route.tab}`
+    case 'charts':
+      return route.genre ? `#/charts/${encodeURIComponent(route.genre)}` : '#/charts'
+    case 'search':
+      return route.query ? `#/search/${encodeURIComponent(route.query)}` : '#/search'
     case 'why':
       return '#/why'
     case 'game':

@@ -21,25 +21,27 @@ await page.reload({ waitUntil: 'networkidle0' })
 const brand = await page.$eval('.wordmark span', (el) => el.textContent)
 if (brand !== 'Kilobyte') throw new Error('expected Kilobyte wordmark')
 
-await page.waitForSelector('.cart-card')
-const count = await page.$$eval('.cart-card', (els) => els.length)
-if (count < 12) throw new Error(`expected a full house library, got ${count}`)
-console.log('library', count)
+await page.waitForSelector('.spotlight')
+await page.waitForSelector('.exp-tile')
+const count = await page.$$eval('.exp-tile', (els) => els.length)
+if (count < 12) throw new Error(`expected Discover rails with a full house library, got ${count}`)
+console.log('discover tiles', count)
 
-const puzzle = await page.evaluate(() => {
-  const chips = [...document.querySelectorAll('.genre-cloud .chip')]
-  const btn = chips.find((c) => c.textContent?.includes('Puzzle'))
+const simulator = await page.evaluate(() => {
+  const chips = [...document.querySelectorAll('.category-strip .chip')]
+  const btn = chips.find((c) => c.textContent?.includes('Simulator'))
   btn?.click()
   return Boolean(btn)
 })
-if (!puzzle) throw new Error('puzzle filter missing')
-await page.waitForFunction(() => document.body.innerText.includes('Ash Fold'))
-console.log('genre filter ok')
+if (!simulator) throw new Error('simulator category missing')
+await page.waitForFunction(() => location.hash.includes('/charts/Simulator'))
+await page.waitForFunction(() => document.body.innerText.includes('Dock Ledger'))
+console.log('charts genre ok')
 
-await page.click('.cart-face')
-await page.waitForSelector('.dash-hero')
-await page.waitForFunction(() => document.body.innerText.includes('Dashboard'))
-console.log('dashboard ok')
+await page.click('.exp-hit')
+await page.waitForSelector('.experience')
+await page.waitForFunction(() => document.body.innerText.includes('About this experience'))
+console.log('experience page ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]

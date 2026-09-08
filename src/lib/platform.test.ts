@@ -3,7 +3,7 @@ import { zipSync, strToU8 } from 'fflate'
 import { parseGithubInput, jsdelivrUrl } from './github'
 import { filesFromZip, findEntry } from './bundle'
 import { normalizeGenre, parseGenreList, toggleGenre } from './genres'
-import { filterGames } from './catalog'
+import { buildRails, featuredGame, filterGames, formatCount } from './catalog'
 import { parseHash, toHash } from './route'
 import { emptyState, houseLibrary, upsertGame } from './storage'
 import { recordFromCart } from './record'
@@ -95,6 +95,49 @@ describe('routes', () => {
     expect(parseHash('#/create/github')).toEqual({ name: 'create', tab: 'github' })
     expect(parseHash('#/game/house_dock_ledger')).toEqual({ name: 'game', id: 'house_dock_ledger' })
     expect(toHash({ name: 'create', tab: 'upload' })).toBe('#/create/upload')
+  })
+
+  it('parses Discover-style charts and search hashes', () => {
+    expect(parseHash('#/charts/Simulator')).toEqual({ name: 'charts', genre: 'Simulator' })
+    expect(parseHash('#/search/dock')).toEqual({ name: 'search', query: 'dock' })
+    expect(toHash({ name: 'charts', genre: 'Puzzle' })).toBe('#/charts/Puzzle')
+    expect(toHash({ name: 'search', query: 'dock ledger' })).toBe('#/search/dock%20ledger')
+  })
+})
+
+describe('discover rails', () => {
+  it('formats visit counts and builds Continue / Recommended / genre rails', () => {
+    expect(formatCount(22100)).toBe('22K')
+    expect(formatCount(980)).toBe('980')
+    const games = [
+      fakeGame({
+        id: 'a',
+        title: 'Harbor',
+        genres: ['Simulator'],
+        visits: 50,
+        createdAt: '2026-01-02T00:00:00.000Z',
+      }),
+      fakeGame({
+        id: 'b',
+        title: 'Ash',
+        genres: ['Puzzle'],
+        visits: 10,
+        createdAt: '2026-01-03T00:00:00.000Z',
+      }),
+    ]
+    expect(featuredGame(games, { b: 100 })?.id).toBe('b')
+    const rails = buildRails(games, {}, ['b'], new Set(['a']), ['a'])
+    expect(rails.map((r) => r.id)).toEqual([
+      'continue',
+      'favorites',
+      'recommended',
+      'upcoming',
+      'yours',
+      'genre-Simulator',
+      'genre-Puzzle',
+    ])
+    expect(rails[0].games[0].id).toBe('b')
+    expect(rails.find((r) => r.id === 'favorites')?.games[0].id).toBe('a')
   })
 })
 

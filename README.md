@@ -1,6 +1,6 @@
 # Kilobyte Arcade
 
-A launchable public arcade: people **browse dashboards**, **search and filter any genre**, **play in the browser**, and **publish** by uploading a build or connecting a GitHub repo. You do not store Unity/WebGL binaries.
+A launchable public arcade shaped like a Discover lobby: people **scroll experience rails**, **open Charts**, **search any genre**, **play in the browser**, and **publish** by uploading a build or connecting a GitHub repo. You do not store Unity/WebGL binaries.
 
 ## Launch it
 
@@ -26,8 +26,9 @@ GitHub is the production path for “literally any game”: a Phaser project, a 
 
 ## Product
 
-- Arcade search, multi-genre filters, source filters, sort
-- Per-game **dashboard** (play, stats, description, related titles)
+- **Discover**: featured experience, category chips, Continue / Recommended / genre rails
+- **Charts**: visit-ranked lists, filterable by genre
+- Search in the top bar; per-experience page with a large Play button, About, and Recommended
 - Player: iframe for HTML/GitHub, built-in engine for carts
 - Create: Upload files/folder/zip · Inspect + publish a public repo · optional cart mint
 - House library across Simulator, Shooter, Puzzle, Horror, Rhythm, Strategy, Racing, Idle, and arcade carts

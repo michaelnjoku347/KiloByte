@@ -25,12 +25,12 @@ async function pause(ms = 900) {
 
 await pause(1000)
 await page.evaluate(() => {
-  const chips = [...document.querySelectorAll('.genre-cloud .chip')]
+  const chips = [...document.querySelectorAll('.category-strip .chip')]
   chips.find((c) => c.textContent?.includes('Simulator'))?.click()
 })
 await pause(900)
-await page.click('.cart-face')
-await page.waitForSelector('.dash-hero')
+await page.click('.exp-hit')
+await page.waitForSelector('.experience')
 await pause(1100)
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]

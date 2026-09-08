@@ -102,6 +102,7 @@ export type GameRecord = {
   palette: Pick<Palette, 'bg' | 'paper' | 'accent'>
   house?: boolean
   bytes: number
+  visits?: number
   source: GameSource
 }
 
@@ -115,12 +116,16 @@ export type ArcadeState = {
   games: GameRecord[]
   settings: ArcadeSettings
   plays: Record<string, number>
+  recents: string[]
+  favorites: string[]
 }
 
 export type CreateTab = 'generate' | 'upload' | 'github'
 
 export type Route =
   | { name: 'arcade' }
+  | { name: 'charts'; genre?: string }
+  | { name: 'search'; query: string }
   | { name: 'create'; tab: CreateTab }
   | { name: 'why' }
   | { name: 'game'; id: string }
