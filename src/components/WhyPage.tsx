@@ -1,96 +1,93 @@
-import type { GameSpec } from '../types'
-import { arcadeWeight } from '../lib/storage'
-import { cartBytes, formatBytes } from '../lib/cart'
+import type { GameRecord } from '../types'
+import { formatBytes } from '../lib/cart'
+import { localWeight } from '../lib/storage'
 import { go } from '../lib/route'
 
-export function WhyPage({ carts }: { carts: GameSpec[] }) {
-  const ourBytes = arcadeWeight(carts)
+export function WhyPage({ carts }: { carts: GameRecord[] }) {
+  const local = localWeight(carts)
+  const github = carts.filter((g) => g.source.kind === 'github').length
+  const uploads = carts.filter((g) => g.source.kind === 'upload').length
   const fakeBuild = 40 * 1024 * 1024
-  const thousandCarts = Math.round((ourBytes / Math.max(carts.length, 1)) * 1000)
 
   return (
     <div className="page why-page">
       <section className="hero compact">
-        <p className="eyebrow">Storage, not slogans</p>
-        <h1>Store the recipe. Share the engine.</h1>
+        <p className="eyebrow">Launch storage</p>
+        <h1>You do not host the games. You host the catalog.</h1>
         <p className="lede">
-          The expensive part of “user-generated games” is almost never the idea. It is
-          uploading megabyte binaries, transcoding previews, and paying a database to
-          remember them. Kilobyte refuses that shape.
+          A launchable arcade is a search index, dashboards, and a player. The expensive
+          files live on GitHub or on the creator’s machine. That is how this stays free
+          for you when people publish simulators, shooters, puzzles — anything.
         </p>
       </section>
 
       <div className="compare">
         <article className="panel stat-card warn-card">
-          <p className="eyebrow">Typical web game build</p>
+          <p className="eyebrow">If you stored every build</p>
           <strong>{formatBytes(fakeBuild)}</strong>
-          <p>One Unity WebGL drop. Hosting, CDN, and backups start charging immediately.</p>
+          <p>One WebGL drop. A real catalog of those becomes a bill.</p>
         </article>
         <article className="panel stat-card">
-          <p className="eyebrow">This arcade right now</p>
-          <strong>{formatBytes(ourBytes)}</strong>
+          <p className="eyebrow">What this cabinet holds locally</p>
+          <strong>{formatBytes(local)}</strong>
           <p>
-            {carts.length} playable carts as JSON. Average{' '}
-            {formatBytes(Math.round(ourBytes / Math.max(carts.length, 1)))} each.
+            {carts.length} listings · {github} GitHub-hosted · {uploads} device uploads
           </p>
         </article>
         <article className="panel stat-card">
-          <p className="eyebrow">1,000 published carts</p>
-          <strong>{formatBytes(thousandCarts)}</strong>
-          <p>Still smaller than a single compressed screenshot. Fits in a free GitHub repo.</p>
+          <p className="eyebrow">GitHub-connected game on your server</p>
+          <strong>0 B</strong>
+          <p>Metadata only. The repo is the CDN.</p>
         </article>
       </div>
 
       <ol className="layers">
         <li>
-          <h2>1. One engine, many saves</h2>
+          <h2>1. Connect a GitHub repo</h2>
           <p>
-            Players never download a unique game runtime. They download this website once.
-            Each published game is a <code>GameSpec</code> — genre, palette, speeds, goal —
-            usually one or two kilobytes. That is the whole storage trick.
+            Creators paste <code>owner/repo</code>. We read the public API, find{' '}
+            <code>index.html</code>, and play through jsDelivr or GitHub Pages. You never
+            receive a zip.
           </p>
         </li>
         <li>
-          <h2>2. House arcade is a static file</h2>
+          <h2>2. Uploads stay in their browser</h2>
           <p>
-            Featured carts ship inside the frontend bundle. Host the site on GitHub Pages
-            or Cloudflare Pages and the catalog costs nothing. No API, no S3 bucket, no
-            Postgres.
+            HTML, folders, or a zip go into IndexedDB and play through a service worker
+            at <code>/local-game/…</code>. That is their disk, not your invoice.
           </p>
         </li>
         <li>
-          <h2>3. Player carts live on the player’s machine</h2>
+          <h2>3. Tiny carts still exist</h2>
           <p>
-            Publish writes to <code>localStorage</code> under <code>kilobyte.arcade.v1</code>.
-            Five megabytes is thousands of carts. You are not paying to remember their
-            drafts.
+            Prompt-minted JSON games are for people who want a one-kilobyte recipe. Full
+            games should be Upload or GitHub.
           </p>
         </li>
         <li>
-          <h2>4. Distribution is a gzipped URL</h2>
+          <h2>4. Dashboards are text</h2>
           <p>
-            A share link encodes the cart into the hash. Whoever opens it can play and
-            optionally save. There is no upload step, so there is no storage invoice when
-            a game goes viral — the bytes travel with the link.
+            Title, genres, description, play counts. Search and filter run on that text.
+            A million dashboards is still cheap. A million binaries is not.
           </p>
         </li>
       </ol>
 
       <section className="panel">
-        <h2>What this will not store</h2>
+        <h2>How to launch this site</h2>
         <p>
-          Full 3D worlds, downloaded MP4 trailers, and per-user video of play sessions
-          would blow the budget. If you ever need a global searchable database, keep
-          storing recipes: put JSON objects in Cloudflare R2 or even a GitHub repo. A
-          million 2 KB carts is about 2 GB — still cheaper than a weekend of asset
-          hosting.
+          This is a static Vite app. Build it and put <code>dist/</code> on GitHub Pages
+          or Cloudflare Pages. No API keys required for the public cabinet. Optional
+          Gemini and GitHub tokens are typed by the visitor and stored locally.
         </p>
-        <p className="meter-line">
-          Smallest cart in this cabinet: {formatBytes(Math.min(...carts.map(cartBytes)))}
-        </p>
-        <button type="button" className="primary-btn" onClick={() => go({ name: 'studio' })}>
-          Mint a cheap cart
-        </button>
+        <div className="hero-actions">
+          <button type="button" className="primary-btn" onClick={() => go({ name: 'create', tab: 'github' })}>
+            Connect a repo
+          </button>
+          <button type="button" className="ghost-btn" onClick={() => go({ name: 'create', tab: 'upload' })}>
+            Upload a build
+          </button>
+        </div>
       </section>
     </div>
   )

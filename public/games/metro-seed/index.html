@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Metro Seed</title>
+    <style>
+      :root { color-scheme: dark; font-family: Georgia, serif; background:#17140f; color:#f3ead7; }
+      body { margin: 0; padding: 20px; max-width: 520px; }
+      h1 { margin: 0 0 6px; }
+      .fare { font-size: 42px; margin: 12px 0; }
+      button { display:block; width:100%; margin:8px 0; padding:12px; border:0; border-radius:12px; background:#2a2118; color:#f3ead7; font:inherit; text-align:left; cursor:pointer; }
+      button:disabled { opacity:.4; cursor:default; }
+      #tap { background:#f6d37a; color:#17140f; font-size:20px; text-align:center; }
+      .muted { color:#b3a38e; }
+    </style>
+  </head>
+  <body>
+    <h1>Metro Seed</h1>
+    <p class="muted">A one-page transit company. Fares stay on this device.</p>
+    <div class="fare" id="cash">$0</div>
+    <button id="tap">Collect fares</button>
+    <button id="line">Buy a line ($25)</button>
+    <button id="crew">Hire a crew ($80)</button>
+    <button id="night">Night service ($220)</button>
+    <p class="muted" id="rate">0.0 /s</p>
+    <script>
+      let cash=0, lines=0, crews=0, night=0
+      const $ = id => document.getElementById(id)
+      const rate = () => lines*0.4 + crews*1.6 + night*6
+      function draw(){
+        $('cash').textContent = '$'+cash.toFixed(1)
+        $('rate').textContent = rate().toFixed(1)+' /s · '+lines+' lines · '+crews+' crews'
+        $('line').disabled = cash<25
+        $('crew').disabled = cash<80
+        $('night').disabled = cash<220
+      }
+      $('tap').onclick = () => { cash += 1 + lines*0.5; draw() }
+      $('line').onclick = () => { if(cash>=25){ cash-=25; lines++; draw() } }
+      $('crew').onclick = () => { if(cash>=80){ cash-=80; crews++; draw() } }
+      $('night').onclick = () => { if(cash>=220){ cash-=220; night++; draw() } }
+      setInterval(() => { cash += rate()/10; draw() }, 100)
+      draw()
+    </script>
+  </body>
+</html>

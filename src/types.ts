@@ -62,19 +62,71 @@ export type GameSpec = {
   }
 }
 
+export type GithubSource = {
+  kind: 'github'
+  owner: string
+  repo: string
+  branch: string
+  path: string
+  playUrl: string
+  htmlUrl: string
+}
+
+export type HtmlSource = {
+  kind: 'html'
+  entry: string
+  href: string
+}
+
+export type UploadSource = {
+  kind: 'upload'
+  entry: string
+}
+
+export type CartSource = {
+  kind: 'cart'
+  spec: GameSpec
+}
+
+export type GameSource = GithubSource | HtmlSource | UploadSource | CartSource
+
+export type GameRecord = {
+  id: string
+  title: string
+  author: string
+  blurb: string
+  description: string
+  genres: string[]
+  createdAt: string
+  cover: string
+  palette: Pick<Palette, 'bg' | 'paper' | 'accent'>
+  house?: boolean
+  bytes: number
+  source: GameSource
+}
+
 export type ArcadeSettings = {
   author: string
   geminiKey: string
+  githubToken: string
 }
 
 export type ArcadeState = {
-  carts: GameSpec[]
+  games: GameRecord[]
   settings: ArcadeSettings
+  plays: Record<string, number>
 }
+
+export type CreateTab = 'generate' | 'upload' | 'github'
 
 export type Route =
   | { name: 'arcade' }
-  | { name: 'studio' }
+  | { name: 'create'; tab: CreateTab }
   | { name: 'why' }
+  | { name: 'game'; id: string }
   | { name: 'play'; id: string }
   | { name: 'share'; payload: string }
+
+export type SourceFilter = 'all' | 'house' | 'mine' | 'github' | 'upload' | 'cart'
+
+export type BrowseSort = 'new' | 'title' | 'played' | 'genre'

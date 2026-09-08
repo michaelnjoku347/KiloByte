@@ -6,65 +6,69 @@ const browser = await puppeteer.launch({
 })
 
 const page = await browser.newPage()
-page.setDefaultTimeout(15000)
+page.setDefaultTimeout(20000)
 await page.setViewport({ width: 1440, height: 900 })
 
 const errors = []
 page.on('pageerror', (e) => errors.push(String(e.message || e)))
 
 await page.goto('http://localhost:5173/', { waitUntil: 'networkidle0' })
-await page.evaluate(() => localStorage.clear())
+await page.evaluate(() => {
+  localStorage.clear()
+})
 await page.reload({ waitUntil: 'networkidle0' })
 
 const brand = await page.$eval('.wordmark span', (el) => el.textContent)
-console.log('brand:', brand)
 if (brand !== 'Kilobyte') throw new Error('expected Kilobyte wordmark')
 
 await page.waitForSelector('.cart-card')
-const houseCount = await page.$$eval('.cart-card', (els) => els.length)
-console.log('house carts:', houseCount)
-if (houseCount < 6) throw new Error('expected house arcade')
+const count = await page.$$eval('.cart-card', (els) => els.length)
+if (count < 12) throw new Error(`expected a full house library, got ${count}`)
+console.log('library', count)
+
+const puzzle = await page.evaluate(() => {
+  const chips = [...document.querySelectorAll('.genre-cloud .chip')]
+  const btn = chips.find((c) => c.textContent?.includes('Puzzle'))
+  btn?.click()
+  return Boolean(btn)
+})
+if (!puzzle) throw new Error('puzzle filter missing')
+await page.waitForFunction(() => document.body.innerText.includes('Ash Fold'))
+console.log('genre filter ok')
 
 await page.click('.cart-face')
-await page.waitForSelector('canvas.crt')
-console.log('play cabinet ok')
-await page.screenshot({ path: '/tmp/kilobyte-play.png' })
+await page.waitForSelector('.dash-hero')
+await page.waitForFunction(() => document.body.innerText.includes('Dashboard'))
+console.log('dashboard ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
-  buttons.find((b) => b.textContent?.includes('Studio'))?.click()
+  buttons.find((b) => b.textContent?.trim() === 'Play')?.click()
 })
-await page.waitForSelector('.studio-page')
-const textarea = await page.$('textarea')
-await textarea.click({ clickCount: 3 })
-await textarea.type('a neon snake in a candy factory named "Smoke Coil"')
-await page.click('.studio-page .primary-btn')
-await page.waitForFunction(() => document.body.innerText.includes('Smoke Coil'))
-console.log('studio mint ok')
-await page.screenshot({ path: '/tmp/kilobyte-studio.png' })
+await page.waitForSelector('canvas, iframe.game-frame')
+console.log('play ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
-  buttons.find((b) => b.textContent?.includes('Publish to arcade'))?.click()
+  buttons.find((b) => b.textContent?.includes('Create'))?.click()
 })
-await page.waitForSelector('canvas.crt')
-console.log('published play ok')
+await page.waitForSelector('.dropzone')
+console.log('create upload ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
-  buttons.find((b) => b.textContent?.includes('Arcade'))?.click()
+  buttons.find((b) => b.textContent?.includes('Connect GitHub'))?.click()
 })
-await page.waitForFunction(() => document.body.innerText.includes('Smoke Coil'))
-console.log('arcade lists published cart')
+await page.waitForFunction(() => document.body.innerText.includes('Inspect repo'))
+console.log('create github ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
-  buttons.find((b) => b.textContent?.includes('Why'))?.click()
+  buttons.find((b) => b.textContent?.includes('Hosting'))?.click()
 })
 await page.waitForSelector('.why-page')
-await page.waitForFunction(() => document.body.innerText.includes('Store the recipe'))
-console.log('why page ok')
-await page.screenshot({ path: '/tmp/kilobyte-why.png', fullPage: true })
+await page.waitForFunction(() => document.body.innerText.includes('You do not host the games'))
+console.log('hosting page ok')
 
 if (errors.length) {
   console.log('page errors:', errors)

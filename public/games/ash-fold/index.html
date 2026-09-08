@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ash Fold</title>
+    <style>
+      :root { color-scheme: dark; font-family: Georgia, serif; background: #1b1410; color: #f0e4d0; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
+      .wrap { width: min(420px, 92vw); }
+      h1 { font-weight: 600; margin: 0 0 8px; }
+      .bar { display: flex; justify-content: space-between; font: 13px ui-monospace, monospace; color: #c45c26; margin-bottom: 12px; }
+      .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+      .tile { aspect-ratio: 1; border: 0; border-radius: 8px; font: 700 22px Georgia, serif; background: #3a2a20; color: #f0e4d0; cursor: pointer; }
+      .tile.gap { background: transparent; cursor: default; }
+      button.go { margin-top: 12px; border: 0; border-radius: 999px; padding: 10px 16px; background: #c45c26; color: #fff; font: inherit; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Ash Fold</h1>
+      <div class="bar"><span id="moves">0 moves</span><span id="status">Order the ash</span></div>
+      <div class="grid" id="grid"></div>
+      <button class="go" id="scramble">Scramble</button>
+    </div>
+    <script>
+      let tiles = [...Array(15).keys()].map(i => i+1).concat(0)
+      let moves = 0
+      const grid = document.getElementById('grid')
+      const won = () => tiles.every((n,i) => (i===15 ? n===0 : n===i+1))
+      function draw() {
+        grid.innerHTML = tiles.map((n,i) => `<button class="tile ${n===0?'gap':''}" data-i="${i}">${n||''}</button>`).join('')
+        document.getElementById('moves').textContent = `${moves} moves`
+        document.getElementById('status').textContent = won() ? 'The letter holds.' : 'Slide into the burn'
+      }
+      function swap(i,j) { const t=tiles[i]; tiles[i]=tiles[j]; tiles[j]=t }
+      function neighbors(i) {
+        const x=i%4, y=Math.floor(i/4), out=[]
+        if (x) out.push(i-1); if (x<3) out.push(i+1); if (y) out.push(i-4); if (y<3) out.push(i+4)
+        return out
+      }
+      grid.onclick = (e) => {
+        const btn = e.target.closest('[data-i]')
+        if (!btn || won()) return
+        const i = +btn.dataset.i, z = tiles.indexOf(0)
+        if (!neighbors(i).includes(z)) return
+        swap(i,z); moves++; draw()
+      }
+      function scramble() {
+        tiles = [...Array(15).keys()].map(i => i+1).concat(0)
+        for (let k=0;k<80;k++) {
+          const z = tiles.indexOf(0)
+          const n = neighbors(z)
+          swap(z, n[Math.floor(Math.random()*n.length)])
+        }
+        moves = 0
+        draw()
+      }
+      document.getElementById('scramble').onclick = scramble
+      scramble()
+    </script>
+  </body>
+</html>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Void Line</title>
+    <style>
+      html,body { margin:0; height:100%; background:#0b1020; color:#d7e0ff; font-family:Georgia,serif; }
+      canvas { display:block; width:100%; height:100%; }
+      .hud { position:fixed; top:10px; left:12px; right:12px; display:flex; justify-content:space-between; font: 13px ui-monospace, monospace; color:#7cf0ff; pointer-events:none; }
+    </style>
+  </head>
+  <body>
+    <div class="hud"><span id="s">0</span><span>ARROWS / WASD · SPACE</span><span id="l">3</span></div>
+    <canvas id="c"></canvas>
+    <script>
+      const c = document.getElementById('c'), x = c.getContext('2d')
+      const keys = new Set()
+      addEventListener('keydown', e => { keys.add(e.key); if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault() })
+      addEventListener('keyup', e => keys.delete(e.key))
+      let W, H, score=0, lives=3, bullets=[], foes=[], dust=[], px, py, cd=0, acc=0, over=false
+      function resize(){ W=c.width=innerWidth; H=c.height=innerHeight; px=W/2; py=H-60 }
+      addEventListener('resize', resize); resize()
+      function spawn(){ foes.push({x:40+Math.random()*(W-80), y:-20, vx:(Math.random()-.5)*40, vy:40+Math.random()*50, w:22}) }
+      function loop(now){
+        const dt = Math.min(0.033, (now - (loop.t||now))/1000); loop.t = now
+        x.fillStyle='#0b1020'; x.fillRect(0,0,W,H)
+        if(!over){
+          const ax = (keys.has('ArrowLeft')||keys.has('a')?-1:0)+(keys.has('ArrowRight')||keys.has('d')?1:0)
+          px = Math.max(20, Math.min(W-20, px+ax*280*dt))
+          cd = Math.max(0, cd-dt); acc += dt
+          if((keys.has(' ')||keys.has('ArrowUp')) && cd===0){ bullets.push({x:px,y:py-12,vy:-420}); cd=0.18 }
+          if(acc>0.7){ acc=0; spawn() }
+          bullets.forEach(b => b.y += b.vy*dt)
+          bullets = bullets.filter(b => b.y>-20)
+          foes.forEach(f => { f.x+=f.vx*dt; f.y+=f.vy*dt })
+          for(const f of foes){
+            for(const b of bullets){
+              if(Math.hypot(f.x-b.x,f.y-b.y)<18){ f.dead=true; b.dead=true; score++; dust.push({x:f.x,y:f.y,life:.3}) }
+            }
+            if(f.y>H-10){ f.dead=true; lives--; if(lives<=0) over=true }
+          }
+          foes = foes.filter(f=>!f.dead); bullets = bullets.filter(b=>!b.dead)
+        }
+        x.fillStyle='#f4d35e'; x.beginPath(); x.moveTo(px,py-14); x.lineTo(px+10,py+10); x.lineTo(px-10,py+10); x.fill()
+        x.fillStyle='#7cf0ff'; bullets.forEach(b => x.fillRect(b.x-2,b.y,4,12))
+        x.fillStyle='#ff5d73'; foes.forEach(f => x.fillRect(f.x-11,f.y-8,22,16))
+        dust = dust.filter(d => (d.life-=dt)>0)
+        x.fillStyle='#b6f27c'; dust.forEach(d => { x.globalAlpha=d.life; x.fillRect(d.x,d.y,6,6); x.globalAlpha=1 })
+        if(over){ x.fillStyle='#d7e0ff'; x.font='36px Georgia'; x.textAlign='center'; x.fillText('LINE BROKE  '+score, W/2, H/2) }
+        document.getElementById('s').textContent = score+' down'
+        document.getElementById('l').textContent = lives+' hull'
+        requestAnimationFrame(loop)
+      }
+      requestAnimationFrame(loop)
+    </script>
+  </body>
+</html>

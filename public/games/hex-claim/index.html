@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hex Claim</title>
+    <style>
+      :root { color-scheme: dark; font-family: Georgia, serif; background:#122116; color:#e7f0d8; }
+      body { margin:0; display:grid; place-items:center; min-height:100vh; }
+      canvas { max-width: 96vw; }
+      .bar { width:min(520px,92vw); display:flex; justify-content:space-between; margin-bottom:8px; font:13px ui-monospace,monospace; color:#74a12e; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <div class="bar"><span id="s">You 1 · Them 1</span><span>First to 12</span></div>
+      <canvas id="c" width="520" height="420"></canvas>
+    </div>
+    <script>
+      const c=document.getElementById('c'), x=c.getContext('2d')
+      const size=22, cols=9, rows=8
+      const cells=[]
+      function hex(q,r){
+        const x0=60+q*size*1.75 + (r%2)*size*0.88
+        const y0=50+r*size*1.52
+        return {q,r,x:x0,y:y0,owner:0}
+      }
+      for(let r=0;r<rows;r++) for(let q=0;q<cols;q++) cells.push(hex(q,r))
+      cells[0].owner=1; cells[cells.length-1].owner=2
+      function neigh(cell){
+        const odd=cell.r%2
+        const deltas=odd?[[1,0],[-1,0],[0,-1],[1,-1],[0,1],[1,1]]:[[1,0],[-1,0],[-1,-1],[0,-1],[-1,1],[0,1]]
+        return cells.filter(o => deltas.some(([dq,dr]) => o.q===cell.q+dq && o.r===cell.r+dr))
+      }
+      function count(p){ return cells.filter(c=>c.owner===p).length }
+      function draw(msg){
+        x.clearRect(0,0,c.width,c.height)
+        cells.forEach(cell=>{
+          x.beginPath()
+          for(let i=0;i<6;i++){
+            const a=Math.PI/3*i - Math.PI/6
+            const px=cell.x+size*Math.cos(a), py=cell.y+size*Math.sin(a)
+            i?x.lineTo(px,py):x.moveTo(px,py)
+          }
+          x.closePath()
+          x.fillStyle=cell.owner===1?'#74a12e':cell.owner===2?'#9c2d2d':'#1b2a20'
+          x.fill(); x.strokeStyle='#2a3d30'; x.stroke()
+        })
+        document.getElementById('s').textContent = msg || `You ${count(1)} · Them ${count(2)}`
+      }
+      function ai(){
+        const opts=cells.filter(c=>c.owner===0 && neigh(c).some(n=>n.owner===2))
+        if(!opts.length) return
+        opts[Math.floor(Math.random()*opts.length)].owner=2
+      }
+      c.onclick=e=>{
+        if(count(1)>=12||count(2)>=12) return
+        const r=c.getBoundingClientRect()
+        const mx=(e.clientX-r.left)*c.width/r.width, my=(e.clientY-r.top)*c.height/r.height
+        const cell=cells.find(k=>Math.hypot(k.x-mx,k.y-my)<size)
+        if(!cell||cell.owner!==0) return
+        if(!neigh(cell).some(n=>n.owner===1)) return
+        cell.owner=1
+        if(count(1)>=12){ draw('You hold the field.'); return }
+        ai()
+        if(count(2)>=12) draw('They took the ridge.')
+        else draw()
+      }
+      draw()
+    </script>
+  </body>
+</html>

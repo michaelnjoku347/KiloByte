@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { GameSpec } from './types'
-import { useArcade } from './hooks/useArcade'
+import { useCatalog } from './hooks/useCatalog'
 import { useHashRoute } from './hooks/useHashRoute'
-import { ArcadePage } from './components/ArcadePage'
-import { StudioPage } from './components/StudioPage'
-import { PlayPage } from './components/PlayPage'
+import { BrowsePage } from './components/BrowsePage'
+import { CreatePage } from './components/CreatePage'
+import { DashboardPage } from './components/DashboardPage'
+import { PlayView } from './components/PlayView'
 import { WhyPage } from './components/WhyPage'
 import { decodeCart, formatBytes, parseCartJson } from './lib/cart'
+import { recordFromCart } from './lib/record'
+import { ensureGameWorker } from './lib/idb'
 import { go } from './lib/route'
 import './App.css'
 
@@ -41,21 +44,42 @@ function SharedCart({
     return <p className="empty pad">That share link is not a readable cart.</p>
   }
   if (!spec) return <p className="empty pad">Unpacking cart…</p>
-  return <PlayPage spec={spec} author={author} guest onSave={onSave} flash={flash} />
+  return (
+    <PlayView
+      game={recordFromCart(spec)}
+      author={author}
+      guest
+      onSaveRecord={(game) => {
+        if (game.source.kind === 'cart') onSave(game.source.spec)
+      }}
+      flash={flash}
+    />
+  )
 }
 
 function App() {
-  const arcade = useArcade()
+  const catalog = useCatalog()
   const route = useHashRoute()
-  const playSpec = route.name === 'play' ? arcade.find(route.id) : undefined
+
+  useEffect(() => {
+    void ensureGameWorker()
+  }, [])
+
+  const current =
+    route.name === 'game' || route.name === 'play' ? catalog.find(route.id) : undefined
 
   const onImportFile = async (file: File) => {
     try {
-      const spec = parseCartJson(await file.text())
-      arcade.publish(spec)
-      go({ name: 'play', id: spec.id })
+      if (file.name.endsWith('.json')) {
+        const spec = parseCartJson(await file.text())
+        catalog.publishCart(spec)
+        go({ name: 'game', id: spec.id })
+        return
+      }
+      catalog.flash('Use Create → Upload for zips and HTML builds')
+      go({ name: 'create', tab: 'upload' })
     } catch {
-      arcade.flash('Could not import that JSON cart')
+      catalog.flash('Could not import that file')
     }
   }
 
@@ -68,23 +92,35 @@ function App() {
           <small>Arcade</small>
         </button>
         <nav className="nav">
-          <button type="button" className={route.name === 'arcade' ? 'on' : ''} onClick={() => go({ name: 'arcade' })}>
+          <button
+            type="button"
+            className={route.name === 'arcade' ? 'on' : ''}
+            onClick={() => go({ name: 'arcade' })}
+          >
             Arcade
           </button>
-          <button type="button" className={route.name === 'studio' ? 'on' : ''} onClick={() => go({ name: 'studio' })}>
-            Studio
+          <button
+            type="button"
+            className={route.name === 'create' ? 'on' : ''}
+            onClick={() => go({ name: 'create', tab: 'upload' })}
+          >
+            Create
           </button>
-          <button type="button" className={route.name === 'why' ? 'on' : ''} onClick={() => go({ name: 'why' })}>
-            Why it’s free
+          <button
+            type="button"
+            className={route.name === 'why' ? 'on' : ''}
+            onClick={() => go({ name: 'why' })}
+          >
+            Hosting
           </button>
         </nav>
         <div className="top-meta">
-          <span className="pill">{formatBytes(arcade.bytes)}</span>
+          <span className="pill">{formatBytes(catalog.bytes)}</span>
           <label className="import-btn">
-            Import JSON
+            Import
             <input
               type="file"
-              accept="application/json,.json"
+              accept=".json,.zip,.html"
               className="sr-only"
               onChange={(e) => {
                 const file = e.target.files?.[0]
@@ -98,51 +134,73 @@ function App() {
 
       <main>
         {route.name === 'arcade' && (
-          <ArcadePage
-            all={arcade.all}
-            mine={arcade.mine}
-            bytes={arcade.bytes}
-            onRemove={arcade.remove}
+          <BrowsePage
+            all={catalog.all}
+            mineIds={catalog.mineIds}
+            plays={catalog.plays}
+            bytes={catalog.bytes}
+            onRemove={(id) => void catalog.remove(id)}
           />
         )}
-        {route.name === 'studio' && (
-          <StudioPage
-            settings={arcade.settings}
-            onSettings={arcade.setSettings}
-            onPublish={arcade.publish}
-            flash={arcade.flash}
+        {route.name === 'create' && (
+          <CreatePage
+            tab={route.tab}
+            settings={catalog.settings}
+            onSettings={catalog.setSettings}
+            onPublishCart={catalog.publishCart}
+            onPublishGame={catalog.publish}
+            flash={catalog.flash}
           />
         )}
-        {route.name === 'why' && <WhyPage carts={arcade.all} />}
-        {route.name === 'play' && playSpec && (
-          <PlayPage
-            spec={playSpec}
-            author={arcade.settings.author}
-            onSave={arcade.publish}
-            flash={arcade.flash}
+        {route.name === 'why' && <WhyPage carts={catalog.all} />}
+        {route.name === 'game' && current && (
+          <DashboardPage
+            game={current}
+            all={catalog.all}
+            plays={catalog.plays[current.id] ?? 0}
+            mine={catalog.mineIds.has(current.id)}
+            onRemove={() => {
+              void catalog.remove(current.id)
+              go({ name: 'arcade' })
+            }}
+            onPlay={() => {
+              catalog.bumpPlays(current.id)
+              go({ name: 'play', id: current.id })
+            }}
           />
         )}
-        {route.name === 'play' && !playSpec && (
-          <p className="empty pad">Cart missing. It may only exist on another device.</p>
+        {route.name === 'play' && current && (
+          <PlayView
+            game={current}
+            author={catalog.settings.author}
+            onSaveRecord={(game) => {
+              if (game.source.kind === 'cart') catalog.publishCart(game.source.spec)
+              else void catalog.publish(game)
+            }}
+            flash={catalog.flash}
+          />
+        )}
+        {(route.name === 'game' || route.name === 'play') && !current && (
+          <p className="empty pad">Game missing on this device. Upload it again or open the GitHub listing.</p>
         )}
         {route.name === 'share' && (
           <SharedCart
             key={route.payload}
             payload={route.payload}
-            author={arcade.settings.author}
-            onSave={arcade.publish}
-            flash={arcade.flash}
+            author={catalog.settings.author}
+            onSave={catalog.publishCart}
+            flash={catalog.flash}
           />
         )}
       </main>
 
       <footer className="footer">
-        <span>Recipes in JSON · engine in the page · $0 storage architecture</span>
-        <span>{arcade.all.length} carts on this cabinet</span>
+        <span>Dashboards + GitHub + uploads · you do not host the binaries</span>
+        <span>{catalog.all.length} games</span>
       </footer>
-      {arcade.toast && (
+      {catalog.toast && (
         <div className="toast" role="status">
-          {arcade.toast}
+          {catalog.toast}
         </div>
       )}
     </div>

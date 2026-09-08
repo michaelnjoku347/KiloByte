@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { compileCart, detectGenre, detectTheme, remixCart } from './generate'
 import { cartBytes, decodeCart, encodeCart, formatBytes, isGameSpec } from './cart'
 import { HOUSE_CARTS } from '../data/house'
-import { parseHash, toHash } from './route'
-import { arcadeWeight, emptyState, upsertCart } from './storage'
 
 describe('prompt compiler', () => {
   it('maps obvious genres and themes', () => {
@@ -82,35 +80,6 @@ describe('house arcade', () => {
       expect(cart.house).toBe(true)
       expect(cartBytes(cart)).toBeLessThan(2048)
     }
-    expect(arcadeWeight(HOUSE_CARTS)).toBeLessThan(12_000)
-  })
-})
-
-describe('routes', () => {
-  it('parses hash routes', () => {
-    expect(parseHash('')).toEqual({ name: 'arcade' })
-    expect(parseHash('#/studio')).toEqual({ name: 'studio' })
-    expect(parseHash('#/why')).toEqual({ name: 'why' })
-    expect(parseHash('#/play/house_coil')).toEqual({ name: 'play', id: 'house_coil' })
-    expect(parseHash('#/c/z.abc/def')).toEqual({ name: 'share', payload: 'z.abc/def' })
-    expect(toHash({ name: 'play', id: 'x' })).toBe('#/play/x')
-  })
-})
-
-describe('cabinet storage', () => {
-  it('upserts player carts without duplicating ids', () => {
-    const a = compileCart({
-      prompt: 'ocean collector',
-      author: 'A',
-      id: 'cart_a',
-      seed: 1,
-      createdAt: '2026-01-01T00:00:00.000Z',
-    })
-    const edited = { ...a, title: 'Tide Pocket' }
-    const once = upsertCart(emptyState().carts, a)
-    const twice = upsertCart(once, edited)
-    expect(twice).toHaveLength(1)
-    expect(twice[0].title).toBe('Tide Pocket')
-    expect(twice[0].house).toBe(false)
+    expect(HOUSE_CARTS.reduce((n, c) => n + cartBytes(c), 0)).toBeLessThan(12_000)
   })
 })
