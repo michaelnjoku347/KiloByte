@@ -132,8 +132,8 @@ export async function inspectGithub(input: string, token?: string): Promise<Gith
     stars: repo.stargazers_count,
     topics: repo.topics ?? [],
     htmlUrl: repo.html_url,
-    playUrl: jsdelivrUrl(ref, entry),
-    pagesUrl: repo.homepage || pagesUrl(ref),
+    playUrl: pagesUrl(ref),
+    pagesUrl: repo.homepage?.startsWith('http') ? repo.homepage : pagesUrl(ref),
     entry,
   }
 }

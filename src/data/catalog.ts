@@ -144,7 +144,7 @@ export const HOUSE_GAMES: GameRecord[] = [
       repo: '2048',
       branch: 'master',
       path: '',
-      playUrl: 'https://cdn.jsdelivr.net/gh/gabrielecirulli/2048@master/index.html',
+      playUrl: 'https://gabrielecirulli.github.io/2048/',
       htmlUrl: 'https://github.com/gabrielecirulli/2048',
     },
   },

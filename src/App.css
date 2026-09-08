@@ -584,6 +584,14 @@ h2 {
   margin: 6px;
 }
 
+.file-list ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
 .dash-hero {
   border-radius: 28px;
   padding: 28px 24px;

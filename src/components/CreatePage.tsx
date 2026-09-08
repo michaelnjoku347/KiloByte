@@ -5,7 +5,7 @@ import type { GithubInspect } from '../lib/github'
 import { compileCart } from '../lib/generate'
 import { composeWithGemini } from '../lib/gemini'
 import { cartBytes, encodeCart, formatBytes, shareUrl } from '../lib/cart'
-import { inspectGithub } from '../lib/github'
+import { inspectGithub, jsdelivrUrl } from '../lib/github'
 import { bundleBytes, filesFromList, findEntry } from '../lib/bundle'
 import { parseGenreList } from '../lib/genres'
 import { uid } from '../lib/hash'
@@ -162,6 +162,7 @@ function UploadForm({
               type="file"
               multiple
               className="sr-only"
+              data-testid="upload-files"
               accept=".zip,.html,.htm,.js,.css,.json,.png,.jpg,.gif,.svg,.webp,.mp3,.wav"
               onChange={(e) => {
                 const list = [...(e.target.files ?? [])]
@@ -186,9 +187,17 @@ function UploadForm({
           </label>
         </div>
         {files.length > 0 && (
-          <p className="meter-line">
-            {files.length} files · {formatBytes(bundleBytes(files))} · entry {entry}
-          </p>
+          <div className="file-list">
+            <p className="meter-line">
+              {files.length} files · {formatBytes(bundleBytes(files))} · entry {entry}
+            </p>
+            <ul>
+              {files.slice(0, 8).map((f) => (
+                <li key={f.path}>{f.path}</li>
+              ))}
+              {files.length > 8 && <li>+{files.length - 8} more</li>}
+            </ul>
+          </div>
         )}
       </section>
       <section className="panel">
@@ -230,7 +239,7 @@ function GithubForm({
   const [blurb, setBlurb] = useState('')
   const [description, setDescription] = useState('')
   const [genres, setGenres] = useState<string[]>(['Puzzle'])
-  const [usePages, setUsePages] = useState(false)
+  const [usePages, setUsePages] = useState(true)
   const [busy, setBusy] = useState(false)
 
   const look = async () => {
@@ -278,7 +287,9 @@ function GithubForm({
         repo: inspect.ref.repo,
         branch: inspect.ref.branch,
         path: inspect.ref.path,
-        playUrl: usePages ? inspect.pagesUrl : inspect.playUrl,
+        playUrl: usePages
+          ? inspect.pagesUrl
+          : jsdelivrUrl(inspect.ref, inspect.entry),
         htmlUrl: inspect.htmlUrl,
       },
     })

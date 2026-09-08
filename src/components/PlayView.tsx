@@ -95,24 +95,15 @@ export function PlayView({
 
       {spec && <Cabinet spec={spec} />}
       {!spec && iframe && (
-        <div className="frame-shell">
-          <iframe
-            className="game-frame"
-            title={game.title}
-            src={iframe}
-            sandbox="allow-scripts allow-pointer-lock allow-forms allow-modals allow-same-origin allow-downloads"
-            allow="gamepad; fullscreen"
-            onError={() => setFrameError(true)}
-          />
-          {frameError && (
-            <p className="empty">
-              This host blocked the embed.{' '}
-              <a href={iframe} target="_blank" rel="noreferrer">
-                Open the build
-              </a>
-            </p>
-          )}
-        </div>
+        <RemoteFrame title={game.title} url={iframe} onFail={() => setFrameError(true)} />
+      )}
+      {frameError && iframe && (
+        <p className="empty">
+          Embed blocked.{' '}
+          <a href={iframe} target="_blank" rel="noreferrer">
+            Open the build in a new tab
+          </a>
+        </p>
       )}
       {spec && (
         <p className="controls-help">
@@ -125,4 +116,51 @@ export function PlayView({
 
 function toGameHash(id: string): string {
   return `#/game/${id}`
+}
+
+function RemoteFrame({
+  title,
+  url,
+  onFail,
+}: {
+  title: string
+  url: string
+  onFail: () => void
+}) {
+  const useDirect = /github\.io\/|localhost|\/games\/|\/local-game\//.test(url)
+  const [srcdoc, setSrcdoc] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (useDirect) return
+    let alive = true
+    void fetch(url)
+      .then((res) => res.text())
+      .then((html) => {
+        if (!alive) return
+        const base = url.replace(/[^/]*$/, '')
+        const injected = /<base /i.test(html)
+          ? html
+          : html.replace(/<head([^>]*)>/i, `<head$1><base href="${base}">`)
+        setSrcdoc(injected)
+      })
+      .catch(() => {
+        if (alive) onFail()
+      })
+    return () => {
+      alive = false
+    }
+  }, [url, useDirect])
+
+  return (
+    <div className="frame-shell">
+      <iframe
+        className="game-frame"
+        title={title}
+        src={useDirect ? url : undefined}
+        srcDoc={!useDirect && srcdoc ? srcdoc : undefined}
+        sandbox="allow-scripts allow-pointer-lock allow-forms allow-modals allow-same-origin allow-downloads"
+        allow="gamepad; fullscreen"
+      />
+    </div>
+  )
 }
