@@ -15,7 +15,8 @@
       .ship { border: 0; background: #0e4450; color: inherit; border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: left; }
       .ship.on { outline: 2px solid #ffd166; }
       .msg { text-align: center; padding: 8px; color: #ffd166; }
-      button.act { margin: 0 16px 16px; padding: 10px 16px; border: 0; border-radius: 999px; background: #2ec4b6; color: #062a32; font: inherit; cursor: pointer; }
+      button.act { margin: 0; padding: 8px 14px; border: 0; border-radius: 999px; background: #2ec4b6; color: #062a32; font: inherit; cursor: pointer; }
+      .queue { min-height: 72px; }
     </style>
   </head>
   <body>
@@ -23,11 +24,11 @@
       <span id="cash">Ledger $0</span>
       <span id="clock">Shift 90s</span>
       <span id="rep">Rep 3</span>
+      <button class="act" id="start">Start night shift</button>
     </header>
     <p class="msg" id="msg">Click a waiting hull, then a free berth. Unload before they lose patience.</p>
     <div class="berths" id="berths"></div>
     <div class="queue" id="queue"></div>
-    <button class="act" id="start">Start night shift</button>
     <script>
       const names = ['Kittiwake', 'Brine', 'Cinder', 'Plover', 'Rust', 'Iota']
       const cargo = ['ore', 'grain', 'parts', 'oil', 'lumber']
