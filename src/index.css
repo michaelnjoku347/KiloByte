@@ -4,15 +4,15 @@
   --bg-2: #e7d8ba;
   --panel: #fff8ec;
   --paper: #1c1612;
-  --ticket: #0f6e68;
-  --ember: #c23b22;
-  --mint: #1f6f5c;
+  --ticket: #0d9a90;
+  --ember: #ef3b18;
+  --mint: #12856f;
   --ink: #1c1612;
   --muted: #6a5d50;
   --line: rgba(28, 22, 18, 0.16);
   --shadow: 0 12px 28px rgba(58, 36, 16, 0.12);
   --wash: rgba(239, 228, 207, 0.92);
-  --glow: rgba(194, 59, 34, 0.08);
+  --glow: rgba(239, 59, 24, 0.18);
   --rule: rgba(28, 22, 18, 0.035);
   --play-face: #fff6ee;
   --stamp-edge: #9a2c19;
@@ -38,15 +38,15 @@ html[data-theme='dark'] {
   --bg-2: #261f18;
   --panel: #2c241c;
   --paper: #f4ead8;
-  --ticket: #7ebfb8;
-  --ember: #e07055;
-  --mint: #6fbfa8;
+  --ticket: #4ee6d6;
+  --ember: #ff5c38;
+  --mint: #5ed4b4;
   --ink: #f4ead8;
   --muted: #b9a894;
   --line: rgba(244, 234, 216, 0.14);
   --shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
   --wash: rgba(28, 24, 20, 0.94);
-  --glow: rgba(224, 112, 85, 0.14);
+  --glow: rgba(255, 92, 56, 0.2);
   --rule: rgba(244, 234, 216, 0.05);
   --play-face: #1c1814;
   --stamp-edge: #c45c3a;
@@ -57,6 +57,10 @@ html[data-theme='dark'] {
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 html,

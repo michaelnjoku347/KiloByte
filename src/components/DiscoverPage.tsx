@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { GameRecord } from '../types'
 import { CHART_GENRES, buildRails, featuredGame, filterGames, formatCount, visitScore } from '../lib/catalog'
 import { go } from '../lib/route'
+import { livePointer } from '../lib/pointer'
 import { GameCard } from './GameCard'
 
 export function DiscoverPage({
@@ -50,11 +51,12 @@ export function DiscoverPage({
           <p className="empty">Nothing by that name. Try Puzzle, Simulator, or a title like Dock Ledger.</p>
         ) : (
           <div className="shelf-grid">
-            {results.map((game) => (
+            {results.map((game, i) => (
               <GameCard
                 key={game.id}
                 game={game}
                 plays={plays[game.id] ?? 0}
+                stagger={i}
                 onPlay={() => onPlay(game.id)}
               />
             ))}
@@ -89,11 +91,12 @@ export function DiscoverPage({
           <div className="lead-spread">
             <button
               type="button"
-              className="lead-poster"
+              className="lead-poster tilt"
               style={{
                 background: `linear-gradient(168deg, ${featured.palette.bg} 10%, ${featured.cover} 80%)`,
               }}
               onClick={() => go({ name: 'game', id: featured.id })}
+              {...livePointer}
             >
               <i>{featured.genres[0]}</i>
               <span>{featured.title}</span>
@@ -140,12 +143,13 @@ export function DiscoverPage({
             )}
           </header>
           <div className="shelf-grid">
-            {shelf.games.map((game) => (
+            {shelf.games.map((game, i) => (
               <GameCard
                 key={game.id}
                 game={game}
                 plays={plays[game.id] ?? 0}
                 compact
+                stagger={i}
                 onPlay={() => onPlay(game.id)}
               />
             ))}

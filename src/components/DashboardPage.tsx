@@ -3,6 +3,7 @@ import { formatBytes } from '../lib/cart'
 import { formatCount, similarGames, visitScore } from '../lib/catalog'
 import { playUrlFor, sourceLabel } from '../lib/record'
 import { go } from '../lib/route'
+import { livePointer } from '../lib/pointer'
 import { GameCard } from './GameCard'
 
 export function DashboardPage({
@@ -38,8 +39,9 @@ export function DashboardPage({
       </button>
       <section className="dossier">
         <div
-          className="dossier-poster"
+          className="dossier-poster tilt"
           style={{ background: `linear-gradient(168deg, ${game.palette.bg}, ${game.cover})` }}
+          {...livePointer}
         >
           <i>{game.genres[0] || 'Game'}</i>
           <span>{game.title}</span>
@@ -108,8 +110,8 @@ export function DashboardPage({
             <h2>Nearby on the shelf</h2>
           </header>
           <div className="shelf-grid">
-            {related.map((item) => (
-              <GameCard key={item.id} game={item} compact onPlay={() => onPlayOther(item.id)} />
+            {related.map((item, i) => (
+              <GameCard key={item.id} game={item} compact stagger={i} onPlay={() => onPlayOther(item.id)} />
             ))}
           </div>
         </section>

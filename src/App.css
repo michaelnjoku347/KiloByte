@@ -947,6 +947,295 @@ h2 {
   font-size: 0.9rem;
 }
 
+.topbar,
+.panel,
+.howto,
+.you-card,
+.dropzone,
+.index-table tbody tr,
+.field input,
+.field textarea {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.nav button,
+.filters button {
+  position: relative;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.nav button:hover,
+.filters button:hover {
+  color: var(--ember);
+}
+
+.wordmark {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.wordmark:hover span {
+  color: var(--ember);
+}
+
+.seal {
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.seal:hover {
+  transform: rotate(-10deg) scale(1.08);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--ember) 22%, transparent);
+}
+
+.primary-btn,
+.play-btn,
+.ghost-btn {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    filter 0.14s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.primary-btn:hover,
+.play-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--stamp-edge);
+  filter: saturate(1.2) brightness(1.05);
+}
+
+.primary-btn:active,
+.play-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--stamp-edge);
+  filter: none;
+}
+
+.ghost-btn:hover {
+  border-color: var(--ember);
+  color: var(--ember);
+  transform: translate(-1px, -1px);
+}
+
+.howto li {
+  padding: 8px 6px;
+  border-radius: 4px;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.howto li:hover {
+  transform: translateX(6px);
+  background: var(--bg-2);
+}
+
+.howto strong {
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.howto li:hover strong {
+  transform: scale(1.12) rotate(-6deg);
+}
+
+.kind-link,
+.chip {
+  background-image: linear-gradient(var(--ember), var(--ember));
+  background-size: 0 2px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.22s ease, color 0.22s ease, border-color 0.22s ease;
+}
+
+.kind-link:hover,
+.kind-on,
+.prompt-row .chip:hover {
+  background-size: 100% 2px;
+  color: var(--ember);
+}
+
+.prompt-row .chip {
+  transition:
+    transform 0.14s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.prompt-row .chip:hover {
+  transform: translateY(-2px);
+}
+
+.prompt-row .chip-on:hover {
+  color: var(--on-plate);
+}
+
+.lead-poster,
+.dossier-poster,
+.plate-face {
+  overflow: hidden;
+  position: relative;
+}
+
+.tilt {
+  --px: 0;
+  --py: 0;
+  transform: perspective(820px) rotateY(calc(var(--px) * 10deg)) rotateX(calc(var(--py) * -9deg))
+    translateZ(0);
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease;
+  will-change: transform;
+}
+
+.tilt:hover {
+  box-shadow: 0 24px 44px rgba(58, 36, 16, 0.28);
+}
+
+.tilt::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    118deg,
+    transparent 32%,
+    rgba(255, 255, 255, 0.34) 50%,
+    transparent 68%
+  );
+  opacity: 0;
+  transform: translateX(calc(var(--px) * 28%)) translateY(calc(var(--py) * 12%));
+  transition: opacity 0.2s ease;
+}
+
+.tilt:hover::after {
+  opacity: 1;
+}
+
+.plate {
+  --stagger: 0;
+  animation: rise-in 0.48s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--stagger) * 42ms);
+}
+
+.plate-copy strong,
+.plate-play,
+.index-title {
+  transition: color 0.18s ease;
+}
+
+.plate:hover .plate-copy strong,
+.plate-play:hover,
+.index-title:hover {
+  color: var(--ember);
+}
+
+.plate-play {
+  transition: transform 0.18s ease, color 0.18s ease, letter-spacing 0.18s ease;
+}
+
+.plate:hover .plate-play {
+  letter-spacing: 0.04em;
+}
+
+.index-table tbody tr:hover {
+  background: var(--panel);
+}
+
+.index-table tbody tr:hover .index-num {
+  color: var(--ember);
+  transform: scale(1.08);
+}
+
+.index-num {
+  transition: color 0.18s ease, transform 0.18s ease;
+  display: inline-block;
+}
+
+.dropzone {
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.dropzone:hover {
+  border-color: var(--ember);
+  transform: translateY(-2px);
+}
+
+.theme-switch button {
+  transition:
+    transform 0.16s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.theme-switch button:hover {
+  transform: translateY(-2px);
+}
+
+.toast {
+  animation: toast-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    transition: none;
+  }
+
+  .plate,
+  .toast,
+  .tilt,
+  .howto li,
+  .howto strong,
+  .play-btn,
+  .primary-btn,
+  .ghost-btn,
+  .seal,
+  .nav button,
+  .kind-link,
+  .chip {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .tilt::after {
+    display: none;
+  }
+}
+
 @media (max-width: 860px) {
   .topbar,
   main,
