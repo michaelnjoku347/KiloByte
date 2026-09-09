@@ -11,7 +11,7 @@
   --muted: #6a5d50;
   --line: rgba(28, 22, 18, 0.16);
   --shadow: 0 12px 28px rgba(58, 36, 16, 0.12);
-  --wash: rgba(239, 228, 207, 0.92);
+  --wash: #efe4cf;
   --glow: rgba(239, 59, 24, 0.18);
   --rule: rgba(28, 22, 18, 0.035);
   --play-face: #fff6ee;
@@ -45,7 +45,7 @@ html[data-theme='dark'] {
   --muted: #b9a894;
   --line: rgba(244, 234, 216, 0.14);
   --shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
-  --wash: rgba(28, 24, 20, 0.94);
+  --wash: #1c1814;
   --glow: rgba(255, 92, 56, 0.2);
   --rule: rgba(244, 234, 216, 0.05);
   --play-face: #1c1814;

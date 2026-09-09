@@ -15,7 +15,8 @@
   z-index: 8;
   background: var(--wash);
   border-bottom: 1px solid var(--line);
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
+  color: var(--ink);
 }
 
 .wordmark {
