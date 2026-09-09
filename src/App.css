@@ -1464,24 +1464,67 @@ h2 {
   .studio-grid,
   .play-head,
   .dash-stats,
-  .lead-spread,
   .dossier,
   .you-split,
   .you-card {
     grid-template-columns: 1fr;
   }
 
+  .lead-spread {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
   .lead-poster {
-    min-height: 280px;
-    aspect-ratio: 4 / 5;
+    grid-area: auto;
+    min-height: 200px;
+    aspect-ratio: 16 / 10;
   }
 
   .lead-body {
-    padding: 20px 18px 22px;
+    grid-area: auto;
+    position: static;
+    align-self: stretch;
+    padding: 16px 2px 0;
+    color: inherit;
+    max-width: none;
+    pointer-events: auto;
+  }
+
+  .lead-body .eyebrow {
+    color: var(--ember);
+  }
+
+  .lead-body .lede,
+  .lead-body .meter-line,
+  .lead-body h1 {
+    color: inherit;
+  }
+
+  .lead-body .lede,
+  .lead-body .meter-line {
+    opacity: 1;
+  }
+
+  .lead-body .ghost-btn {
+    background: var(--panel);
+    border-color: var(--line);
+    color: var(--ink);
+    backdrop-filter: none;
+  }
+
+  .lead-rating .star-empty {
+    color: color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+
+  .lead-rating .star-num {
+    color: var(--muted);
   }
 
   .nav {
     overflow-x: auto;
+    max-width: 100%;
   }
 
   .top-meta .import-btn {
