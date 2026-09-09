@@ -461,10 +461,17 @@ h2 {
 
 .plate-meta {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   min-width: 0;
+}
+
+.plate-author {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .stars {
@@ -1379,6 +1386,10 @@ h2 {
 
   .top-meta .import-btn {
     display: none;
+  }
+
+  .shelf-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .index-kind,
