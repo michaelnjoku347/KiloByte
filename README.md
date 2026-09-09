@@ -29,6 +29,7 @@ GitHub is the production path for “literally any game”: a Phaser project, a 
 - **Play**: numbered how-to, today’s pick, wrapping shelf of portrait cards
 - **Catalog**: a ranked table of every game, filterable by kind
 - Find a title from the masthead; each card has Play, Save, and “what this is”
+- **You**: optional on-device card (no account server) and Light/Dark appearance
 - Player: iframe for HTML/GitHub, built-in engine for carts
 - Make: Upload files/folder/zip · Inspect + publish a public repo · optional cart mint
 - House library across Simulator, Shooter, Puzzle, Horror, Rhythm, Strategy, Racing, Idle, and arcade carts

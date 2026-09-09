@@ -11,6 +11,14 @@
   --muted: #6a5d50;
   --line: rgba(28, 22, 18, 0.16);
   --shadow: 0 12px 28px rgba(58, 36, 16, 0.12);
+  --wash: rgba(239, 228, 207, 0.92);
+  --glow: rgba(194, 59, 34, 0.08);
+  --rule: rgba(28, 22, 18, 0.035);
+  --play-face: #fff6ee;
+  --stamp-edge: #9a2c19;
+  --on-plate: #fff8ee;
+  --code-bg: #1c1612;
+  --code-ink: #efe4cf;
   --font-display: 'Fraunces', 'Times New Roman', serif;
   --font-ui: 'IBM Plex Sans', 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
@@ -22,6 +30,29 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #1c1814;
+  --bg-2: #261f18;
+  --panel: #2c241c;
+  --paper: #f4ead8;
+  --ticket: #7ebfb8;
+  --ember: #e07055;
+  --mint: #6fbfa8;
+  --ink: #f4ead8;
+  --muted: #b9a894;
+  --line: rgba(244, 234, 216, 0.14);
+  --shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+  --wash: rgba(28, 24, 20, 0.94);
+  --glow: rgba(224, 112, 85, 0.14);
+  --rule: rgba(244, 234, 216, 0.05);
+  --play-face: #1c1814;
+  --stamp-edge: #c45c3a;
+  --on-plate: #fff8ee;
+  --code-bg: #100e0c;
+  --code-ink: #f4ead8;
 }
 
 * {
@@ -38,14 +69,10 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(ellipse at 12% -8%, rgba(194, 59, 34, 0.08), transparent 42%),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 27px,
-      rgba(28, 22, 18, 0.035) 28px
-    ),
+    radial-gradient(ellipse at 12% -8%, var(--glow), transparent 42%),
+    repeating-linear-gradient(0deg, transparent, transparent 27px, var(--rule) 28px),
     var(--bg);
+  color: var(--ink);
 }
 
 button,

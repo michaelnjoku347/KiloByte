@@ -9,6 +9,18 @@
       name="description"
       content="Kilobyte — a paper catalog of browser games. Pick one, press Play, or publish yours. Files stay on GitHub or your machine."
     />
+    <script>
+      try {
+        const raw = localStorage.getItem('kilobyte.arcade.v2')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (parsed && parsed.settings && parsed.settings.theme === 'dark') {
+            document.documentElement.dataset.theme = 'dark'
+            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#1c1814')
+          }
+        }
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

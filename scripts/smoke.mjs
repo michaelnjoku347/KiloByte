@@ -74,6 +74,30 @@ await page.waitForSelector('.why-page')
 await page.waitForFunction(() => document.body.innerText.includes('You do not host the games'))
 console.log('hosting page ok')
 
+await page.click('.seal')
+await page.waitForSelector('.you-page')
+await page.waitForFunction(() => document.body.innerText.includes('Make a card'))
+await page.evaluate(() => {
+  const buttons = [...document.querySelectorAll('.theme-switch button')]
+  buttons.find((b) => b.textContent?.trim() === 'Dark')?.click()
+})
+await page.waitForFunction(() => document.documentElement.dataset.theme === 'dark')
+console.log('dark mode ok')
+await page.evaluate(() => {
+  const buttons = [...document.querySelectorAll('.theme-switch button')]
+  buttons.find((b) => b.textContent?.trim() === 'Light')?.click()
+})
+await page.waitForFunction(() => document.documentElement.dataset.theme !== 'dark')
+await page.type('input[placeholder="Mina"]', 'Mina Oak')
+await page.type('input[placeholder="mina"]', 'mina')
+await page.evaluate(() => {
+  const buttons = [...document.querySelectorAll('button')]
+  buttons.find((b) => b.textContent?.trim() === 'Make this card')?.click()
+})
+await page.waitForFunction(() => document.body.innerText.includes('@mina'))
+await page.waitForFunction(() => document.querySelector('.seal.on'))
+console.log('profile card ok')
+
 if (errors.length) {
   console.log('page errors:', errors)
   process.exitCode = 1

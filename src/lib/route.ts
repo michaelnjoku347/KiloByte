@@ -19,6 +19,7 @@ export function parseHash(hash: string): Route {
     return { name: 'search', query: decodeURIComponent(parts.slice(1).join('/') || '') }
   }
   if (head === 'why') return { name: 'why' }
+  if (head === 'you' || head === 'profile') return { name: 'you' }
   if (head === 'game' && parts[1]) return { name: 'game', id: parts[1] }
   if (head === 'play' && parts[1]) return { name: 'play', id: parts[1] }
   if (head === 'c' && parts[1]) return { name: 'share', payload: parts.slice(1).join('/') }
@@ -35,6 +36,8 @@ export function toHash(route: Route): string {
       return route.query ? `#/search/${encodeURIComponent(route.query)}` : '#/search'
     case 'why':
       return '#/why'
+    case 'you':
+      return '#/you'
     case 'game':
       return `#/game/${route.id}`
     case 'play':

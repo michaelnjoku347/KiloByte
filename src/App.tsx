@@ -8,10 +8,12 @@ import { CreatePage } from './components/CreatePage'
 import { DashboardPage } from './components/DashboardPage'
 import { PlayView } from './components/PlayView'
 import { WhyPage } from './components/WhyPage'
+import { ProfilePage } from './components/ProfilePage'
 import { decodeCart, parseCartJson } from './lib/cart'
 import { recordFromCart } from './lib/record'
 import { ensureGameWorker } from './lib/idb'
 import { go, parseHash } from './lib/route'
+import { initialsFrom } from './lib/profile'
 import './App.css'
 
 function SharedCart({
@@ -93,10 +95,12 @@ function App() {
     }
   }
 
-  const initials = catalog.settings.author.trim().slice(0, 1).toUpperCase() || 'A'
+  const initials = catalog.signedIn && catalog.profile
+    ? initialsFrom(catalog.profile.displayName)
+    : '?'
 
   return (
-    <div className="shell">
+    <div className="shell" data-theme={catalog.settings.theme}>
       <header className="topbar">
         <button type="button" className="wordmark" onClick={() => go({ name: 'arcade' })}>
           <span>Kilobyte</span>
@@ -162,9 +166,14 @@ function App() {
               }}
             />
           </label>
-          <span className="seal" title={catalog.settings.author}>
+          <button
+            type="button"
+            className={`seal ${catalog.signedIn ? 'on' : 'guest'}`}
+            title={catalog.signedIn && catalog.profile ? catalog.profile.displayName : 'You — optional card'}
+            onClick={() => go({ name: 'you' })}
+          >
             {initials}
-          </span>
+          </button>
         </div>
       </header>
 
@@ -197,6 +206,7 @@ function App() {
           <CreatePage
             tab={route.tab}
             settings={catalog.settings}
+            signedIn={catalog.signedIn}
             onSettings={catalog.setSettings}
             onPublishCart={catalog.publishCart}
             onPublishGame={catalog.publish}
@@ -204,6 +214,23 @@ function App() {
           />
         )}
         {route.name === 'why' && <WhyPage carts={catalog.all} />}
+        {route.name === 'you' && (
+          <ProfilePage
+            signedIn={catalog.signedIn}
+            profile={catalog.profile}
+            theme={catalog.settings.theme}
+            mine={catalog.mine}
+            saved={catalog.all.filter((g) => catalog.favorites.includes(g.id))}
+            plays={catalog.plays}
+            onPlay={play}
+            onSignUp={catalog.signUp}
+            onSignIn={catalog.signIn}
+            onSignOut={catalog.signOut}
+            onUpdate={catalog.updateProfile}
+            onRemove={catalog.removeProfile}
+            onTheme={catalog.setTheme}
+          />
+        )}
         {route.name === 'game' && current && (
           <DashboardPage
             game={current}
