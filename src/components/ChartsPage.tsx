@@ -77,9 +77,17 @@ export function ChartsPage({
               <td className="index-num">{i + 1}</td>
               <td>
                 <button type="button" className="index-title" onClick={() => go({ name: 'game', id: game.id })}>
-                  {game.title}
+                  <span
+                    className="index-cover"
+                    style={{
+                      background: `linear-gradient(160deg, ${game.palette.bg} 10%, ${game.cover} 90%)`,
+                    }}
+                  />
+                  <span>
+                    {game.title}
+                    <p className="index-blurb">{game.blurb}</p>
+                  </span>
                 </button>
-                <p className="index-blurb">{game.blurb}</p>
               </td>
               <td className="index-kind">{game.genres[0] || 'Game'}</td>
               <td className="index-rating">

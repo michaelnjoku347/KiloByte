@@ -144,7 +144,7 @@ function App() {
           }}
         >
           <label>
-            <span className="find-label">Find</span>
+            <span className="find-label sr-only">Search</span>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}

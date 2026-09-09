@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  --bg: #f3f4f8;
+  --bg: #eef0f5;
   --bg-2: #e8eaf1;
   --panel: #ffffff;
   --paper: #0c0e12;
@@ -23,7 +23,7 @@
   --star: #f5b942;
   --radius: 22px;
   --radius-sm: 14px;
-  --font-display: 'Syne', 'Outfit', sans-serif;
+  --font-display: 'Outfit', 'Segoe UI', sans-serif;
   --font-ui: 'Outfit', 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   font-family: var(--font-ui);

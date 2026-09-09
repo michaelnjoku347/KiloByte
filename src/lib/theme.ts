@@ -9,5 +9,5 @@ export function applyTheme(theme: SiteTheme): void {
   document.documentElement.dataset.theme = theme
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'dark' ? '#09090b' : '#f4f5f8')
+    ?.setAttribute('content', theme === 'dark' ? '#09090b' : '#eef0f5')
 }
