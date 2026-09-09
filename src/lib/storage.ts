@@ -1,96 +1,109 @@
-import type { AppSettings, AppState, Assignment, FiredReminder } from '../types'
-import { createSeedAssignments } from '../data/seed'
+import type { ArcadeSettings, ArcadeState, GameRecord, GameSpec } from '../types'
+import { HOUSE_CARTS } from '../data/house'
+import { HOUSE_GAMES } from '../data/catalog'
+import { recordFromCart } from './record'
 
-export const STORAGE_KEY = 'syllabus.calendar.v1'
-export const BACKUP_VERSION = 1 as const
+export const STORAGE_KEY = 'kilobyte.arcade.v2'
+export const LEGACY_KEY = 'kilobyte.arcade.v1'
 
-export const DEFAULT_SETTINGS: AppSettings = {
-  notificationsEnabled: false,
-  defaultReminders: [1440, 60],
-  icsUrls: {},
+export const DEFAULT_SETTINGS: ArcadeSettings = {
+  author: 'Anonymous',
+  geminiKey: '',
+  githubToken: '',
 }
 
-function defaultState(): AppState {
-  return {
-    assignments: createSeedAssignments(),
-    settings: DEFAULT_SETTINGS,
-    firedReminders: [],
+export function emptyState(): ArcadeState {
+  return { games: [], settings: DEFAULT_SETTINGS, plays: {}, recents: [], favorites: [] }
+}
+
+function migrateLegacy(): GameRecord[] {
+  try {
+    const raw = localStorage.getItem(LEGACY_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as { carts?: GameSpec[] }
+    return Array.isArray(parsed.carts) ? parsed.carts.filter((c) => c?.v === 1).map(recordFromCart) : []
+  } catch {
+    return []
   }
 }
 
-function normalizeState(parsed: Partial<AppState>): AppState {
-  return {
-    assignments: Array.isArray(parsed.assignments)
-      ? parsed.assignments
-      : createSeedAssignments(),
-    settings: {
-      ...DEFAULT_SETTINGS,
-      ...(parsed.settings ?? {}),
-      defaultReminders:
-        parsed.settings?.defaultReminders ?? DEFAULT_SETTINGS.defaultReminders,
-      icsUrls: parsed.settings?.icsUrls ?? {},
-    },
-    firedReminders: Array.isArray(parsed.firedReminders)
-      ? parsed.firedReminders
-      : [],
-  }
-}
-
-export function loadState(): AppState {
+export function loadState(): ArcadeState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return defaultState()
-    return normalizeState(JSON.parse(raw) as Partial<AppState>)
+    if (!raw) {
+      return {
+        games: migrateLegacy(),
+        settings: DEFAULT_SETTINGS,
+        plays: {},
+        recents: [],
+        favorites: [],
+      }
+    }
+    const parsed = JSON.parse(raw) as Partial<ArcadeState> & { carts?: GameSpec[] }
+    const fromV2 = Array.isArray(parsed.games) ? parsed.games : []
+    const leftover = Array.isArray(parsed.carts)
+      ? parsed.carts.filter((c) => c?.v === 1).map(recordFromCart)
+      : []
+    return {
+      games: [...fromV2, ...leftover].filter((g) => g && g.id && g.source),
+      settings: {
+        ...DEFAULT_SETTINGS,
+        ...(parsed.settings ?? {}),
+        author: parsed.settings?.author?.trim() || DEFAULT_SETTINGS.author,
+        geminiKey: parsed.settings?.geminiKey ?? '',
+        githubToken: parsed.settings?.githubToken ?? '',
+      },
+      plays: parsed.plays && typeof parsed.plays === 'object' ? parsed.plays : {},
+      recents: Array.isArray(parsed.recents) ? parsed.recents.filter((id) => typeof id === 'string') : [],
+      favorites: Array.isArray(parsed.favorites)
+        ? parsed.favorites.filter((id) => typeof id === 'string')
+        : [],
+    }
   } catch {
-    return defaultState()
+    return emptyState()
   }
 }
 
-export function saveState(state: AppState): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-}
-
-export function uid(prefix = 'asg'): string {
-  return `${prefix}_${crypto.randomUUID().slice(0, 8)}`
-}
-
-export function upsertAssignment(
-  list: Assignment[],
-  assignment: Assignment,
-): Assignment[] {
-  const idx = list.findIndex((a) => a.id === assignment.id)
-  if (idx === -1) return [...list, assignment]
-  const next = [...list]
-  next[idx] = assignment
-  return next
-}
-
-export function rememberFired(
-  fired: FiredReminder[],
-  entry: FiredReminder,
-): FiredReminder[] {
-  const exists = fired.some(
-    (f) => f.assignmentId === entry.assignmentId && f.offset === entry.offset,
-  )
-  return exists ? fired : [...fired, entry]
-}
-
-export function exportBackupJson(state: AppState): string {
-  return JSON.stringify(
-    {
-      version: BACKUP_VERSION,
-      exportedAt: new Date().toISOString(),
-      ...state,
-    },
-    null,
-    2,
+export function saveState(state: ArcadeState): void {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      games: state.games,
+      settings: state.settings,
+      plays: state.plays,
+      recents: state.recents,
+      favorites: state.favorites,
+    }),
   )
 }
 
-export function parseBackupJson(text: string): AppState {
-  const parsed = JSON.parse(text) as Partial<AppState> & { version?: number }
-  if (!Array.isArray(parsed.assignments)) {
-    throw new Error('Backup file is missing assignments.')
+export function houseLibrary(): GameRecord[] {
+  return [...HOUSE_GAMES, ...HOUSE_CARTS.map(recordFromCart)]
+}
+
+export function publishedGames(state: ArcadeState): GameRecord[] {
+  const seen = new Set<string>()
+  const out: GameRecord[] = []
+  for (const game of [...houseLibrary(), ...state.games]) {
+    if (seen.has(game.id)) continue
+    seen.add(game.id)
+    out.push(game)
   }
-  return normalizeState(parsed)
+  return out.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
+
+export function upsertGame(games: GameRecord[], game: GameRecord): GameRecord[] {
+  const next = { ...game, house: false }
+  const idx = games.findIndex((g) => g.id === game.id)
+  if (idx === -1) return [...games, next]
+  const copy = [...games]
+  copy[idx] = next
+  return copy
+}
+
+export function localWeight(games: GameRecord[]): number {
+  return games.reduce((sum, game) => {
+    if (game.source.kind === 'github') return sum
+    return sum + game.bytes
+  }, 0)
 }

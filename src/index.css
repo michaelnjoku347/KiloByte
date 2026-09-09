@@ -1,25 +1,24 @@
 :root {
   color-scheme: light;
-  --ink: #12201d;
-  --ink-soft: #3d4f49;
-  --muted: #6b7c75;
-  --paper: rgba(255, 252, 248, 0.78);
-  --paper-solid: #fffdf9;
-  --line: rgba(18, 32, 29, 0.1);
-  --jade: #0f6b57;
-  --jade-deep: #0a4338;
-  --gold: #b8872c;
-  --danger: #a33b3b;
-  --warn: #9a5b12;
-  --shadow: 0 18px 50px rgba(12, 28, 24, 0.12);
-  --radius: 18px;
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-ui: 'Outfit', system-ui, sans-serif;
+  --bg: #efe4cf;
+  --bg-2: #e7d8ba;
+  --panel: #fff8ec;
+  --paper: #1c1612;
+  --ticket: #0f6e68;
+  --ember: #c23b22;
+  --mint: #1f6f5c;
+  --ink: #1c1612;
+  --muted: #6a5d50;
+  --line: rgba(28, 22, 18, 0.16);
+  --shadow: 0 12px 28px rgba(58, 36, 16, 0.12);
+  --font-display: 'Fraunces', 'Times New Roman', serif;
+  --font-ui: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   font-family: var(--font-ui);
-  line-height: 1.45;
+  line-height: 1.5;
   font-weight: 400;
   color: var(--ink);
-  background: #d7e3dc;
+  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -38,6 +37,15 @@ body,
 body {
   margin: 0;
   min-width: 320px;
+  background:
+    radial-gradient(ellipse at 12% -8%, rgba(194, 59, 34, 0.08), transparent 42%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgba(28, 22, 18, 0.035) 28px
+    ),
+    var(--bg);
 }
 
 button,
@@ -53,10 +61,11 @@ button {
 }
 
 code {
+  font-family: var(--font-mono);
   font-size: 0.92em;
   padding: 0.1em 0.35em;
-  border-radius: 6px;
-  background: rgba(15, 107, 87, 0.1);
+  border-radius: 4px;
+  background: rgba(15, 110, 104, 0.1);
 }
 
 .sr-only {

@@ -1,0 +1,119 @@
+import type { GameRecord } from '../types'
+import { formatBytes } from '../lib/cart'
+import { formatCount, similarGames, visitScore } from '../lib/catalog'
+import { playUrlFor, sourceLabel } from '../lib/record'
+import { go } from '../lib/route'
+import { GameCard } from './GameCard'
+
+export function DashboardPage({
+  game,
+  all,
+  plays,
+  mine,
+  favorited,
+  onRemove,
+  onPlay,
+  onFavorite,
+  onPlayOther,
+}: {
+  game: GameRecord
+  all: GameRecord[]
+  plays: number
+  mine: boolean
+  favorited: boolean
+  onRemove: () => void
+  onPlay: () => void
+  onFavorite: () => void
+  onPlayOther: (id: string) => void
+}) {
+  const related = similarGames(game, all, 8)
+  const href = playUrlFor(game)
+  const github = game.source.kind === 'github' ? game.source.htmlUrl : undefined
+  const visits = visitScore(game, { [game.id]: plays })
+
+  return (
+    <div className="page dash-page">
+      <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
+        ← Back to the floor
+      </button>
+      <section className="dossier">
+        <div
+          className="dossier-poster"
+          style={{ background: `linear-gradient(168deg, ${game.palette.bg}, ${game.cover})` }}
+        >
+          <i>{game.genres[0] || 'Game'}</i>
+          <span>{game.title}</span>
+        </div>
+        <div className="dossier-side">
+          <p className="eyebrow">{game.genres.join(' · ') || 'Game'}</p>
+          <h1>{game.title}</h1>
+          <p className="creator-row">by {game.author}</p>
+          <p className="lede">{game.blurb}</p>
+          <p className="meter-line">
+            {formatCount(visits)} plays · {plays} on this device
+            {game.bytes ? ` · ${formatBytes(game.bytes)} local` : ' · hosted off-site'}
+          </p>
+          <div className="hero-actions">
+            <button type="button" className="play-btn" onClick={onPlay}>
+              Play this
+            </button>
+            <button type="button" className={`ghost-btn ${favorited ? 'on-fav' : ''}`} onClick={onFavorite}>
+              {favorited ? 'Saved' : 'Save'}
+            </button>
+            {github && (
+              <a className="ghost-btn link-btn" href={github} target="_blank" rel="noreferrer">
+                GitHub
+              </a>
+            )}
+            {href && game.source.kind !== 'cart' && (
+              <a className="ghost-btn link-btn" href={href} target="_blank" rel="noreferrer">
+                Raw build
+              </a>
+            )}
+            {mine && (
+              <button type="button" className="ghost-btn" onClick={onRemove}>
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="panel about-panel">
+        <h2>What this is</h2>
+        <p className="dash-copy">{game.description}</p>
+        <dl className="spec-dl">
+          <div>
+            <dt>Created</dt>
+            <dd>{new Date(game.createdAt).toLocaleDateString()}</dd>
+          </div>
+          <div>
+            <dt>Source</dt>
+            <dd>{sourceLabel(game.source)}</dd>
+          </div>
+          <div>
+            <dt>Kinds</dt>
+            <dd>{game.genres.join(', ') || '—'}</dd>
+          </div>
+          <div>
+            <dt>Kind of file</dt>
+            <dd>{game.source.kind}</dd>
+          </div>
+        </dl>
+      </section>
+
+      {related.length > 0 && (
+        <section className="shelf">
+          <header className="shelf-head">
+            <h2>Nearby on the shelf</h2>
+          </header>
+          <div className="shelf-grid">
+            {related.map((item) => (
+              <GameCard key={item.id} game={item} compact onPlay={() => onPlayOther(item.id)} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  )
+}

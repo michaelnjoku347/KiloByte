@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lane Heat</title>
+    <style>
+      html,body{margin:0;height:100%;background:#1a120c;color:#f3ead7;font-family:Georgia,serif}
+      canvas{display:block;width:100%;height:100%}
+      .hud{position:fixed;top:12px;left:14px;right:14px;display:flex;justify-content:space-between;font:13px ui-monospace,monospace;color:#e85d3a}
+    </style>
+  </head>
+  <body>
+    <div class="hud"><span id="d">0 m</span><span>← → change lane</span></div>
+    <canvas id="c"></canvas>
+    <script>
+      const c=document.getElementById('c'), x=c.getContext('2d')
+      let W,H,lane=1, cars=[], dist=0, acc=0, dead=false, speed=220
+      function resize(){W=c.width=innerWidth;H=c.height=innerHeight}
+      addEventListener('resize',resize); resize()
+      addEventListener('keydown', e=>{
+        if(e.key==='ArrowLeft'||e.key==='a') lane=Math.max(0,lane-1)
+        if(e.key==='ArrowRight'||e.key==='d') lane=Math.min(2,lane+1)
+      })
+      let touchX=null
+      addEventListener('touchstart', e=> touchX=e.touches[0].clientX, {passive:true})
+      addEventListener('touchend', e=>{
+        if(touchX==null) return
+        const dx=e.changedTouches[0].clientX-touchX
+        if(dx<-20) lane=Math.max(0,lane-1)
+        if(dx>20) lane=Math.min(2,lane+1)
+        touchX=null
+      })
+      function laneX(i){ return W/2 + (i-1)*(Math.min(120, W*0.22)) }
+      function loop(now){
+        const dt=Math.min(0.033,(now-(loop.t||now))/1000); loop.t=now
+        x.fillStyle='#1a120c'; x.fillRect(0,0,W,H)
+        const road=Math.min(360,W*0.7)
+        x.fillStyle='#2a2118'; x.fillRect(W/2-road/2,0,road,H)
+        x.strokeStyle='#f6d37a'; x.setLineDash([18,16]); x.beginPath(); x.moveTo(W/2,0); x.lineTo(W/2,H); x.stroke(); x.setLineDash([])
+        if(!dead){
+          dist += speed*dt; acc+=dt; speed=Math.min(420, 220+dist/80)
+          if(acc>Math.max(0.28, 0.7-dist/4000)){ acc=0; cars.push({lane:Math.floor(Math.random()*3), y:-40}) }
+          cars.forEach(car => car.y += speed*dt)
+          cars=cars.filter(car=>car.y<H+40)
+          const py=H-70
+          if(cars.some(car=>car.lane===lane && Math.abs(car.y-py)<36)) dead=true
+        }
+        cars.forEach(car=>{
+          x.fillStyle='#8a2a1a'; x.fillRect(laneX(car.lane)-16, car.y, 32, 44)
+        })
+        x.fillStyle='#f6d37a'; x.fillRect(laneX(lane)-16, H-86, 32, 48)
+        document.getElementById('d').textContent = dead ? `Wrecked at ${Math.floor(dist)} m` : `${Math.floor(dist)} m`
+        requestAnimationFrame(loop)
+      }
+      requestAnimationFrame(loop)
+    </script>
+  </body>
+</html>

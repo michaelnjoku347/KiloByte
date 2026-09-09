@@ -1,6 +1,4 @@
 import puppeteer from 'puppeteer'
-import { writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 
 const browser = await puppeteer.launch({
   headless: true,
@@ -8,86 +6,73 @@ const browser = await puppeteer.launch({
 })
 
 const page = await browser.newPage()
-page.setDefaultTimeout(15000)
+page.setDefaultTimeout(20000)
 await page.setViewport({ width: 1440, height: 900 })
 
 const errors = []
 page.on('pageerror', (e) => errors.push(String(e.message || e)))
 
 await page.goto('http://localhost:5173/', { waitUntil: 'networkidle0' })
+await page.evaluate(() => {
+  localStorage.clear()
+})
+await page.reload({ waitUntil: 'networkidle0' })
 
-const brand = await page.$eval('.brand', (el) => el.textContent)
-console.log('brand:', brand)
+const brand = await page.$eval('.wordmark span', (el) => el.textContent)
+if (brand !== 'Kilobyte') throw new Error('expected Kilobyte wordmark')
 
-await page.click('.view-switch button:nth-child(2)')
-await page.waitForSelector('.week-grid')
-console.log('week view ok')
-await page.screenshot({ path: '/tmp/syllabus-week.png', fullPage: true })
+await page.waitForSelector('.howto')
+await page.waitForSelector('.lead')
+await page.waitForSelector('.plate')
+const count = await page.$$eval('.plate', (els) => els.length)
+if (count < 8) throw new Error(`expected a catalog shelf, got ${count} plates`)
+console.log('floor plates', count)
 
-await page.click('.view-switch button:nth-child(3)')
-await page.waitForSelector('.agenda-list')
-console.log('agenda view ok')
-await page.screenshot({ path: '/tmp/syllabus-agenda.png', fullPage: true })
+const simulator = await page.evaluate(() => {
+  const links = [...document.querySelectorAll('.kind-link')]
+  const btn = links.find((c) => c.textContent?.includes('Simulator'))
+  btn?.click()
+  return Boolean(btn)
+})
+if (!simulator) throw new Error('simulator kind missing')
+await page.waitForFunction(() => location.hash.includes('/charts/Simulator'))
+await page.waitForSelector('.index-table')
+await page.waitForFunction(() => document.body.innerText.includes('Dock Ledger'))
+console.log('catalog kind ok')
 
-await page.click('.view-switch button:nth-child(1)')
-await page.waitForSelector('.month-grid')
-console.log('month view ok')
+await page.click('.index-title')
+await page.waitForSelector('.dossier')
+await page.waitForFunction(() => document.body.innerText.includes('What this is'))
+console.log('game card ok')
 
-// Quick add — target the topbar primary button specifically
-await page.click('.top-actions .primary-btn')
-await page.waitForSelector('.modal')
-console.log('quick add modal ok')
-
-await page.click('input[placeholder="e.g. Module 4 quiz"]', { clickCount: 3 })
-await page.type('input[placeholder="e.g. Module 4 quiz"]', 'Midterm Study Guide')
-await page.click('input[placeholder="BCS 213"]', { clickCount: 3 })
-await page.type('input[placeholder="BCS 213"]', 'BCS 213')
-
-const labels = await page.$$('.source-choice')
-for (const label of labels) {
-  const text = await label.evaluate((el) => el.textContent || '')
-  if (text.includes('Zybooks')) {
-    await label.click()
-    break
-  }
-}
-
-await page.screenshot({ path: '/tmp/syllabus-quick-add.png' })
-await page.click('.modal-actions button.primary-btn')
-await page.waitForFunction(() =>
-  document.body.innerText.includes('Midterm Study Guide'),
-)
-console.log('created assignment ok')
-
-// Import ICS via file input in Import drawer
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
-  const importBtn = buttons.find((b) => b.textContent?.includes('Import ICS'))
-  importBtn?.click()
+  buttons.find((b) => b.textContent?.trim() === 'Play this')?.click()
 })
-await page.waitForSelector('.import-modal')
+await page.waitForSelector('canvas, iframe.game-frame')
+console.log('play ok')
 
-const samplePath = resolve('/workspace/public/sample-brightspace.ics')
-const input = await page.$('.import-modal input[type="file"]')
-await input.uploadFile(samplePath)
-await page.waitForFunction(() =>
-  document.body.innerText.includes('Brightspace Quiz') ||
-    document.body.innerText.includes('Imported'),
-)
-console.log('ics import ok')
-
-await page.screenshot({ path: '/tmp/syllabus-after-import.png', fullPage: true })
-
-// Toggle source filter
 await page.evaluate(() => {
-  const rows = [...document.querySelectorAll('.source-row')]
-  const cengage = rows.find((r) => r.textContent?.includes('Cengage'))
-  cengage?.click()
+  const buttons = [...document.querySelectorAll('button')]
+  buttons.find((b) => b.textContent?.trim() === 'Make')?.click()
 })
-await new Promise((r) => setTimeout(r, 300))
-console.log('source toggle ok')
+await page.waitForSelector('.dropzone')
+console.log('make upload ok')
 
-await page.screenshot({ path: '/tmp/syllabus-final.png', fullPage: true })
+await page.evaluate(() => {
+  const buttons = [...document.querySelectorAll('button')]
+  buttons.find((b) => b.textContent?.includes('Connect GitHub'))?.click()
+})
+await page.waitForFunction(() => document.body.innerText.includes('Inspect repo'))
+console.log('make github ok')
+
+await page.evaluate(() => {
+  const buttons = [...document.querySelectorAll('button')]
+  buttons.find((b) => b.textContent?.includes('Hosting'))?.click()
+})
+await page.waitForSelector('.why-page')
+await page.waitForFunction(() => document.body.innerText.includes('You do not host the games'))
+console.log('hosting page ok')
 
 if (errors.length) {
   console.log('page errors:', errors)

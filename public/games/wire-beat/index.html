@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wire Beat</title>
+    <style>
+      html,body{margin:0;height:100%;background:#101014;color:#f4f1ea;font-family:Georgia,serif}
+      .hud{padding:10px 14px;font:13px ui-monospace,monospace;color:#c6f26d}
+      .lanes{display:grid;grid-template-columns:repeat(4,1fr);height:calc(100% - 90px);gap:8px;padding:0 12px}
+      .lane{position:relative;background:#18181f;border-radius:10px;overflow:hidden}
+      .note{position:absolute;left:12%;right:12%;height:18px;background:#c6f26d;border-radius:6px}
+      .rail{position:absolute;left:0;right:0;bottom:48px;height:6px;background:#ff5a36}
+      .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 12px}
+      .keys button{padding:12px;border:0;border-radius:10px;background:#2a2118;color:#f4f1ea;font:inherit;cursor:pointer}
+    </style>
+  </head>
+  <body>
+    <div class="hud" id="hud">0 · combo 0 · D F J K</div>
+    <div class="lanes" id="lanes"></div>
+    <div class="keys">
+      <button data-k="d">D</button><button data-k="f">F</button><button data-k="j">J</button><button data-k="k">K</button>
+    </div>
+    <script>
+      const keys=['d','f','j','k']
+      const lanes=document.getElementById('lanes')
+      lanes.innerHTML = keys.map(()=>'<div class="lane"><div class="rail"></div></div>').join('')
+      const laneEls=[...lanes.children]
+      let notes=[], score=0, combo=0, acc=0, miss=0
+      function spawn(){ notes.push({lane:Math.floor(Math.random()*4), y:-20, hit:false}) }
+      function hit(lane){
+        const n=notes.find(n=>n.lane===lane && !n.hit && Math.abs(n.y - (laneEls[0].clientHeight-56))<36)
+        if(n){ n.hit=true; score+=10+combo; combo++; }
+        else { combo=0; miss++ }
+      }
+      addEventListener('keydown', e => { const i=keys.indexOf(e.key.toLowerCase()); if(i>=0) hit(i) })
+      document.querySelector('.keys').onclick = e => {
+        const b=e.target.closest('[data-k]'); if(b) hit(keys.indexOf(b.dataset.k))
+      }
+      function loop(now){
+        const dt=Math.min(0.033,(now-(loop.t||now))/1000); loop.t=now
+        acc+=dt; if(acc>0.7){ acc=0; spawn() }
+        const h=laneEls[0].clientHeight
+        notes.forEach(n => n.y += 180*dt)
+        notes.forEach(n => { if(!n.hit && n.y>h){ n.hit=true; combo=0; miss++ } })
+        notes=notes.filter(n=>n.y<h+40)
+        laneEls.forEach((el,i)=>{
+          el.querySelectorAll('.note').forEach(n=>n.remove())
+          notes.filter(n=>n.lane===i && !n.hit).forEach(n=>{
+            const d=document.createElement('div'); d.className='note'; d.style.top=n.y+'px'; el.appendChild(d)
+          })
+        })
+        document.getElementById('hud').textContent = miss>=12 ? `Browned out · ${score}` : `${score} · combo ${combo} · D F J K`
+        if(miss<12) requestAnimationFrame(loop)
+      }
+      requestAnimationFrame(loop)
+    </script>
+  </body>
+</html>

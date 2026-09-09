@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dock Ledger</title>
+    <style>
+      :root { color-scheme: dark; font-family: Georgia, serif; background: #062a32; color: #d8f3f0; }
+      body { margin: 0; min-height: 100vh; }
+      header { display: flex; justify-content: space-between; padding: 12px 16px; font: 14px ui-monospace, monospace; }
+      .berths { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 0 16px; }
+      .berth { min-height: 120px; border: 1px dashed #2ec4b6; border-radius: 12px; padding: 10px; }
+      .berth.busy { background: #0a3a44; }
+      .queue { padding: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+      .ship { border: 0; background: #0e4450; color: inherit; border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: left; }
+      .ship.on { outline: 2px solid #ffd166; }
+      .msg { text-align: center; padding: 8px; color: #ffd166; }
+      button.act { margin: 0; padding: 8px 14px; border: 0; border-radius: 999px; background: #2ec4b6; color: #062a32; font: inherit; cursor: pointer; }
+      .queue { min-height: 72px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span id="cash">Ledger $0</span>
+      <span id="clock">Shift 90s</span>
+      <span id="rep">Rep 3</span>
+      <button class="act" id="start">Start night shift</button>
+    </header>
+    <p class="msg" id="msg">Click a waiting hull, then a free berth. Unload before they lose patience.</p>
+    <div class="berths" id="berths"></div>
+    <div class="queue" id="queue"></div>
+    <script>
+      const names = ['Kittiwake', 'Brine', 'Cinder', 'Plover', 'Rust', 'Iota']
+      const cargo = ['ore', 'grain', 'parts', 'oil', 'lumber']
+      let cash = 0, rep = 3, t = 90, playing = false, selected = null, spawn = 0
+      const berths = [{ship:null,left:0},{ship:null,left:0},{ship:null,left:0}]
+      let queue = []
+      const $ = (id) => document.getElementById(id)
+      function boat() {
+        return { id: Math.random().toString(36).slice(2,7), name: names[Math.floor(Math.random()*names.length)], cargo: cargo[Math.floor(Math.random()*cargo.length)], wait: 18 + Math.floor(Math.random()*10), size: 1 + Math.floor(Math.random()*2) }
+      }
+      function render() {
+        $('cash').textContent = `Ledger $${cash}`
+        $('clock').textContent = playing ? `Shift ${Math.ceil(t)}s` : 'Shift ready'
+        $('rep').textContent = `Rep ${rep}`
+        $('berths').innerHTML = berths.map((b,i) => `<button class="berth ${b.ship?'busy':''}" data-b="${i}">${b.ship ? `${b.ship.name}<br>${b.ship.cargo} · ${b.left.toFixed(1)}s` : 'Open berth'}</button>`).join('')
+        $('queue').innerHTML = queue.map(s => `<button class="ship ${selected===s.id?'on':''}" data-s="${s.id}">${s.name}<br>${s.cargo} · ${s.wait.toFixed(0)}s</button>`).join('')
+      }
+      function tick(dt) {
+        if (!playing) return
+        t -= dt
+        spawn += dt
+        if (spawn > 3.2) { spawn = 0; if (queue.length < 6) queue.push(boat()) }
+        queue.forEach(s => s.wait -= dt)
+        const lost = queue.filter(s => s.wait <= 0)
+        queue = queue.filter(s => s.wait > 0)
+        if (lost.length) { rep -= lost.length; $('msg').textContent = `${lost[0].name} drifted. Reputation down.` }
+        berths.forEach(b => {
+          if (!b.ship) return
+          b.left -= dt
+          if (b.left <= 0) { cash += 40 * b.ship.size; $('msg').textContent = `${b.ship.name} cleared.`; b.ship = null }
+        })
+        if (rep <= 0 || t <= 0) {
+          playing = false
+          $('msg').textContent = rep <= 0 ? `Shift collapsed. $${cash}.` : `Horn. Night take: $${cash}.`
+        }
+        render()
+      }
+      $('start').onclick = () => {
+        cash = 0; rep = 3; t = 90; queue = [boat(), boat()]; selected = null
+        berths.forEach(b => b.ship = null)
+        playing = true
+        $('msg').textContent = 'Boats in the fog. Seat them.'
+        render()
+      }
+      document.body.addEventListener('click', (e) => {
+        const s = e.target.closest('[data-s]')
+        const b = e.target.closest('[data-b]')
+        if (s) selected = s.dataset.s
+        if (b && selected) {
+          const slot = berths[+b.dataset.b]
+          const ship = queue.find(x => x.id === selected)
+          if (slot && !slot.ship && ship) {
+            slot.ship = ship
+            slot.left = 6 + ship.size * 3
+            queue = queue.filter(x => x.id !== selected)
+            selected = null
+          }
+        }
+        render()
+      })
+      let last = performance.now()
+      function loop(now) {
+        tick(Math.min(0.05, (now-last)/1000))
+        last = now
+        requestAnimationFrame(loop)
+      }
+      render()
+      requestAnimationFrame(loop)
+    </script>
+  </body>
+</html>

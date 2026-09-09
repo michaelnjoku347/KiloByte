@@ -1,349 +1,259 @@
-import { useMemo, useState } from 'react'
-import { format } from 'date-fns'
-import type { Assignment, SourceId, ViewMode } from './types'
-import { SOURCE_ORDER, SOURCES } from './data/sources'
-import { useCalendarStore } from './hooks/useCalendarStore'
-import { MonthView } from './components/MonthView'
-import { WeekView, AgendaView, DayRail } from './components/WeekAgenda'
-import {
-  AssignmentModal,
-  ImportDrawer,
-  draftFromAssignment,
-  emptyDraft,
-  fromLocalInput,
-  type AssignmentDraft,
-} from './components/AssignmentModal'
-import { formatDue, relativeDue, dueUrgency } from './lib/reminders'
+import { useEffect, useState } from 'react'
+import type { GameSpec } from './types'
+import { useCatalog } from './hooks/useCatalog'
+import { useHashRoute } from './hooks/useHashRoute'
+import { DiscoverPage } from './components/DiscoverPage'
+import { ChartsPage } from './components/ChartsPage'
+import { CreatePage } from './components/CreatePage'
+import { DashboardPage } from './components/DashboardPage'
+import { PlayView } from './components/PlayView'
+import { WhyPage } from './components/WhyPage'
+import { decodeCart, parseCartJson } from './lib/cart'
+import { recordFromCart } from './lib/record'
+import { ensureGameWorker } from './lib/idb'
+import { go, parseHash } from './lib/route'
 import './App.css'
 
+function SharedCart({
+  payload,
+  author,
+  onSave,
+  flash,
+}: {
+  payload: string
+  author: string
+  onSave: (spec: GameSpec) => void
+  flash: (message: string) => void
+}) {
+  const [spec, setSpec] = useState<GameSpec | 'err' | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    void decodeCart(payload)
+      .then((next) => {
+        if (alive) setSpec(next)
+      })
+      .catch(() => {
+        if (alive) setSpec('err')
+      })
+    return () => {
+      alive = false
+    }
+  }, [payload])
+
+  if (spec === 'err') {
+    return <p className="empty pad">That share link is not a readable cart.</p>
+  }
+  if (!spec) return <p className="empty pad">Unpacking cart…</p>
+  return (
+    <PlayView
+      game={recordFromCart(spec)}
+      author={author}
+      guest
+      onSaveRecord={(game) => {
+        if (game.source.kind === 'cart') onSave(game.source.spec)
+      }}
+      flash={flash}
+    />
+  )
+}
+
 function App() {
-  const store = useCalendarStore()
-  const [view, setView] = useState<ViewMode>('month')
-  const [cursor, setCursor] = useState(() => new Date())
-  const [selectedDay, setSelectedDay] = useState<Date | null>(() => new Date())
-  const [activeSources, setActiveSources] = useState<Set<SourceId>>(
-    () => new Set(SOURCE_ORDER),
-  )
-  const [query, setQuery] = useState('')
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
-  const [editing, setEditing] = useState<Assignment | null>(null)
-  const [draft, setDraft] = useState<AssignmentDraft>(() =>
-    emptyDraft(new Date(), store.settings.defaultReminders),
-  )
-  const [importOpen, setImportOpen] = useState(false)
+  const catalog = useCatalog()
+  const route = useHashRoute()
+  const [q, setQ] = useState(() => {
+    const start = parseHash(typeof location === 'undefined' ? '' : location.hash)
+    return start.name === 'search' ? start.query : ''
+  })
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return store.assignments.filter((a) => {
-      if (!activeSources.has(a.source)) return false
-      if (!q) return true
-      return (
-        a.title.toLowerCase().includes(q) ||
-        a.course.toLowerCase().includes(q) ||
-        a.notes.toLowerCase().includes(q)
-      )
-    })
-  }, [store.assignments, activeSources, query])
+  useEffect(() => {
+    void ensureGameWorker()
+  }, [])
 
-  const upcoming = useMemo(
-    () =>
-      filtered
-        .filter((a) => !a.completed)
-        .sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime())
-        .slice(0, 8),
-    [filtered],
-  )
+  const current =
+    route.name === 'game' || route.name === 'play' ? catalog.find(route.id) : undefined
 
-  const toggleSource = (id: SourceId) => {
-    setActiveSources((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        if (next.size === 1) return next
-        next.delete(id)
-      } else {
-        next.add(id)
+  const play = (id: string) => {
+    catalog.bumpPlays(id)
+    go({ name: 'play', id })
+  }
+
+  const onImportFile = async (file: File) => {
+    try {
+      if (file.name.endsWith('.json')) {
+        const spec = parseCartJson(await file.text())
+        catalog.publishCart(spec)
+        go({ name: 'game', id: spec.id })
+        return
       }
-      return next
-    })
-  }
-
-  const openCreate = (day?: Date | null) => {
-    setModalMode('create')
-    setEditing(null)
-    setDraft(emptyDraft(day ?? selectedDay, store.settings.defaultReminders))
-    setModalOpen(true)
-  }
-
-  const openEdit = (a: Assignment) => {
-    setModalMode('edit')
-    setEditing(a)
-    setDraft(draftFromAssignment(a))
-    setModalOpen(true)
-  }
-
-  const saveModal = () => {
-    if (!draft.title.trim() || !draft.course.trim() || !draft.dueAtLocal) return
-    const payload = {
-      title: draft.title.trim(),
-      course: draft.course.trim(),
-      source: draft.source,
-      dueAt: fromLocalInput(draft.dueAtLocal),
-      notes: draft.notes.trim(),
-      url: draft.url.trim() || undefined,
-      reminderOffsets: draft.reminderOffsets,
+      catalog.flash('Use Make → Upload for zips and HTML builds')
+      go({ name: 'create', tab: 'upload' })
+    } catch {
+      catalog.flash('Could not import that file')
     }
-    if (modalMode === 'create') {
-      store.addAssignment(payload)
-    } else if (editing) {
-      store.updateAssignment(editing.id, payload)
-      store.flash('Assignment updated')
-    }
-    setModalOpen(false)
   }
+
+  const initials = catalog.settings.author.trim().slice(0, 1).toUpperCase() || 'A'
 
   return (
-    <div className="app-shell">
-      <div className="atmosphere" aria-hidden />
-
+    <div className="shell">
       <header className="topbar">
-        <div className="brand-block">
-          <p className="brand">Syllabus</p>
-          <p className="brand-tag">Farmingdale · deadlines in one place</p>
-        </div>
-
-        <div className="top-actions">
-          <label className="search">
-            <span className="sr-only">Search</span>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search courses or titles"
-            />
-          </label>
-          <button type="button" className="ghost-btn" onClick={() => setImportOpen(true)}>
-            Sync
-          </button>
-          <button type="button" className="ghost-btn" onClick={() => store.exportIcsFile()}>
-            Export ICS
+        <button type="button" className="wordmark" onClick={() => go({ name: 'arcade' })}>
+          <span>Kilobyte</span>
+          <small>the catalog</small>
+        </button>
+        <nav className="nav">
+          <button
+            type="button"
+            className={route.name === 'arcade' || route.name === 'search' ? 'on' : ''}
+            onClick={() => go({ name: 'arcade' })}
+          >
+            Play
           </button>
           <button
             type="button"
-            className="ghost-btn"
-            onClick={() => store.enableNotifications()}
+            className={route.name === 'charts' ? 'on' : ''}
+            onClick={() => go({ name: 'charts' })}
           >
-            {store.settings.notificationsEnabled ? 'Reminders on' : 'Enable reminders'}
+            Catalog
           </button>
-          <button type="button" className="primary-btn" onClick={() => openCreate()}>
-            Quick add
+          <button
+            type="button"
+            className={route.name === 'create' ? 'on' : ''}
+            onClick={() => go({ name: 'create', tab: 'upload' })}
+          >
+            Make
           </button>
+          <button
+            type="button"
+            className={route.name === 'why' ? 'on' : ''}
+            onClick={() => go({ name: 'why' })}
+          >
+            Hosting
+          </button>
+        </nav>
+        <form
+          className="top-search"
+          onSubmit={(e) => {
+            e.preventDefault()
+            go({ name: 'search', query: q.trim() })
+          }}
+        >
+          <label>
+            <span className="find-label">Find</span>
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="a title or kind"
+            />
+          </label>
+        </form>
+        <div className="top-meta">
+          <label className="import-btn">
+            Import
+            <input
+              type="file"
+              accept=".json,.zip,.html"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) void onImportFile(file)
+                e.target.value = ''
+              }}
+            />
+          </label>
+          <span className="seal" title={catalog.settings.author}>
+            {initials}
+          </span>
         </div>
       </header>
 
-      <div className="stats-row">
-        <div className="stat">
-          <span>Open</span>
-          <strong>{store.stats.open}</strong>
-        </div>
-        <div className="stat warn">
-          <span>Overdue</span>
-          <strong>{store.stats.overdue}</strong>
-        </div>
-        <div className="stat">
-          <span>Next 7 days</span>
-          <strong>{store.stats.week}</strong>
-        </div>
-        <div className="view-switch" role="tablist" aria-label="Calendar view">
-          {(['month', 'week', 'agenda'] as ViewMode[]).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              role="tab"
-              aria-selected={view === mode}
-              className={view === mode ? 'on' : ''}
-              onClick={() => setView(mode)}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="workspace">
-        <aside className="sidebar">
-          <section className="panel side-panel">
-            <header className="panel-toolbar stacked">
-              <h2 className="panel-title">Sources</h2>
-              <p className="panel-sub">Filter platforms</p>
-            </header>
-            <div className="source-list">
-              {SOURCE_ORDER.map((id) => (
-                <button
-                  type="button"
-                  key={id}
-                  className={`source-row ${activeSources.has(id) ? 'on' : ''}`}
-                  onClick={() => toggleSource(id)}
-                >
-                  <i style={{ background: SOURCES[id].color }} />
-                  <span>{SOURCES[id].label}</span>
-                  <em>
-                    {
-                      store.assignments.filter(
-                        (a) => a.source === id && !a.completed,
-                      ).length
-                    }
-                  </em>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="panel side-panel">
-            <header className="panel-toolbar stacked">
-              <h2 className="panel-title">Up next</h2>
-              <p className="panel-sub">Sorted by due time</p>
-            </header>
-            <div className="upcoming-list">
-              {upcoming.length === 0 && (
-                <p className="empty-slot">You are clear — nice work.</p>
-              )}
-              {upcoming.map((a) => (
-                <button
-                  type="button"
-                  key={a.id}
-                  className={`upcoming-item urgency-${dueUrgency(a.dueAt, a.completed)}`}
-                  onClick={() => openEdit(a)}
-                >
-                  <div className="upcoming-top">
-                    <span
-                      className="source-pill"
-                      style={{
-                        background: SOURCES[a.source].soft,
-                        color: SOURCES[a.source].color,
-                      }}
-                    >
-                      {SOURCES[a.source].shortLabel}
-                    </span>
-                    <time>{relativeDue(a.dueAt)}</time>
-                  </div>
-                  <strong>{a.title}</strong>
-                  <span className="upcoming-meta">
-                    {a.course} · {formatDue(a.dueAt)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="panel side-panel tips-panel">
-            <h2 className="panel-title">How sync works</h2>
-            <ol>
-              <li>Upload a Brightspace <code>.ics</code> file (not the URL).</li>
-              <li>Quick-add Cengage, Zybooks, and VHL.</li>
-              <li>Export ICS to Google/Apple for phone reminders.</li>
-            </ol>
-            <button type="button" className="ghost-btn full" onClick={store.exportIcsFile}>
-              Export ICS for phone
-            </button>
-            <button type="button" className="ghost-btn full" onClick={store.resetDemoData}>
-              Restore demo deadlines
-            </button>
-          </section>
-        </aside>
-
-        <main className="main-stage">
-          {view === 'month' && (
-            <MonthView
-              cursor={cursor}
-              onCursorChange={setCursor}
-              assignments={filtered}
-              activeSources={activeSources}
-              selectedDay={selectedDay}
-              onSelectDay={(d) => {
-                setSelectedDay(d)
-                setCursor(d)
-              }}
-              onOpenAssignment={openEdit}
-            />
-          )}
-          {view === 'week' && (
-            <WeekView
-              cursor={cursor}
-              onCursorChange={(d) => {
-                setCursor(d)
-                setSelectedDay(d)
-              }}
-              assignments={filtered}
-              activeSources={activeSources}
-              onOpenAssignment={openEdit}
-            />
-          )}
-          {view === 'agenda' && (
-            <AgendaView
-              assignments={filtered}
-              activeSources={activeSources}
-              onOpenAssignment={openEdit}
-            />
-          )}
-        </main>
-
-        {view === 'month' && selectedDay && (
-          <DayRail
-            day={selectedDay}
-            assignments={filtered}
-            onOpenAssignment={openEdit}
-            onAdd={openCreate}
+      <main>
+        {route.name === 'arcade' && (
+          <DiscoverPage
+            all={catalog.all}
+            mineIds={catalog.mineIds}
+            plays={catalog.plays}
+            recents={catalog.recents}
+            favorites={catalog.favorites}
+            onPlay={play}
           />
         )}
-      </div>
+        {route.name === 'search' && (
+          <DiscoverPage
+            all={catalog.all}
+            mineIds={catalog.mineIds}
+            plays={catalog.plays}
+            recents={catalog.recents}
+            favorites={catalog.favorites}
+            searchQuery={route.query}
+            onPlay={play}
+          />
+        )}
+        {route.name === 'charts' && (
+          <ChartsPage all={catalog.all} plays={catalog.plays} genre={route.genre} onPlay={play} />
+        )}
+        {route.name === 'create' && (
+          <CreatePage
+            tab={route.tab}
+            settings={catalog.settings}
+            onSettings={catalog.setSettings}
+            onPublishCart={catalog.publishCart}
+            onPublishGame={catalog.publish}
+            flash={catalog.flash}
+          />
+        )}
+        {route.name === 'why' && <WhyPage carts={catalog.all} />}
+        {route.name === 'game' && current && (
+          <DashboardPage
+            game={current}
+            all={catalog.all}
+            plays={catalog.plays[current.id] ?? 0}
+            mine={catalog.mineIds.has(current.id)}
+            favorited={catalog.favorites.includes(current.id)}
+            onRemove={() => {
+              void catalog.remove(current.id)
+              go({ name: 'arcade' })
+            }}
+            onPlay={() => play(current.id)}
+            onFavorite={() => catalog.toggleFavorite(current.id)}
+            onPlayOther={play}
+          />
+        )}
+        {route.name === 'play' && current && (
+          <PlayView
+            game={current}
+            author={catalog.settings.author}
+            onSaveRecord={(game) => {
+              if (game.source.kind === 'cart') catalog.publishCart(game.source.spec)
+              else void catalog.publish(game)
+            }}
+            flash={catalog.flash}
+          />
+        )}
+        {(route.name === 'game' || route.name === 'play') && !current && (
+          <p className="empty pad">That game is not on this device.</p>
+        )}
+        {route.name === 'share' && (
+          <SharedCart
+            key={route.payload}
+            payload={route.payload}
+            author={catalog.settings.author}
+            onSave={catalog.publishCart}
+            flash={catalog.flash}
+          />
+        )}
+      </main>
 
       <footer className="footer">
-        <span>Local browser storage · export ICS/JSON to keep a copy</span>
-        <span>{format(new Date(), 'EEEE, MMM d')}</span>
+        <span>A catalog, not a file host — games stay on GitHub or the maker’s machine</span>
+        <span>{catalog.all.length} games</span>
       </footer>
-
-      {store.toast && <div className="toast" role="status">{store.toast}</div>}
-
-      <AssignmentModal
-        open={modalOpen}
-        mode={modalMode}
-        draft={draft}
-        assignment={editing}
-        onChange={setDraft}
-        onClose={() => setModalOpen(false)}
-        onSave={saveModal}
-        onDelete={
-          editing
-            ? () => {
-                store.deleteAssignment(editing.id)
-                setModalOpen(false)
-              }
-            : undefined
-        }
-        onToggleComplete={
-          editing
-            ? () => {
-                store.toggleComplete(editing.id)
-                setModalOpen(false)
-              }
-            : undefined
-        }
-      />
-
-      <ImportDrawer
-        open={importOpen}
-        onClose={() => setImportOpen(false)}
-        savedUrl={store.settings.icsUrls.brightspace}
-        onImportFile={(text, source, course) =>
-          store.importIcsText(text, source, course)
-        }
-        onImportUrl={(url, source, course) =>
-          store.importIcsUrl(url, source, course)
-        }
-        onImportBackup={(text) => store.importBackupText(text)}
-        onExportIcs={() => store.exportIcsFile()}
-        onExportBackup={() => store.exportBackup()}
-      />
+      {catalog.toast && (
+        <div className="toast" role="status">
+          {catalog.toast}
+        </div>
+      )}
     </div>
   )
 }

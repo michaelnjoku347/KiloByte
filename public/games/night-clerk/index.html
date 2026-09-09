@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Night Clerk</title>
+    <style>
+      html,body{margin:0;height:100%;background:#12080c;color:#f0e4d0;font-family:Georgia,serif}
+      canvas{display:block;width:100%;height:100%}
+      .hud{position:fixed;top:12px;left:14px;font:13px ui-monospace,monospace;color:#e85d3a}
+    </style>
+  </head>
+  <body>
+    <div class="hud" id="h">Hold the lamp on them · WASD</div>
+    <canvas id="c"></canvas>
+    <script>
+      const c=document.getElementById('c'), g=c.getContext('2d')
+      const keys=new Set()
+      addEventListener('keydown',e=>keys.add(e.key.toLowerCase()))
+      addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()))
+      let W,H,px,py,t=0,win=false,dead=false
+      const ghosts=[]
+      function resize(){W=c.width=innerWidth;H=c.height=innerHeight;px=W/2;py=H/2}
+      addEventListener('resize',resize);resize()
+      for(let i=0;i<7;i++) ghosts.push({x:Math.random()*W,y:Math.random()*H,vx:0,vy:0})
+      function loop(now){
+        const dt=Math.min(0.033,(now-(loop.t||now))/1000); loop.t=now
+        if(!win&&!dead) t+=dt
+        if(t>=45) win=true
+        const ax=(keys.has('a')?-1:0)+(keys.has('d')?1:0)
+        const ay=(keys.has('w')?-1:0)+(keys.has('s')?1:0)
+        if(!dead&&!win){ px+=ax*160*dt; py+=ay*160*dt }
+        px=Math.max(20,Math.min(W-20,px)); py=Math.max(20,Math.min(H-20,py))
+        g.fillStyle='#12080c'; g.fillRect(0,0,W,H)
+        const lamp=120
+        ghosts.forEach(gh=>{
+          const lit=Math.hypot(gh.x-px,gh.y-py)<lamp
+          if(!lit && !dead && !win){
+            const dx=px-gh.x, dy=py-gh.y, m=Math.hypot(dx,dy)||1
+            gh.x+=dx/m*90*dt; gh.y+=dy/m*90*dt
+          }
+          if(Math.hypot(gh.x-px,gh.y-py)<16) dead=true
+          g.fillStyle=lit?'#f0e4d0':'#3a1018'
+          g.beginPath(); g.arc(gh.x,gh.y,10,0,Math.PI*2); g.fill()
+        })
+        const grd=g.createRadialGradient(px,py,10,px,py,lamp)
+        grd.addColorStop(0,'rgba(246,211,122,0.35)'); grd.addColorStop(1,'rgba(0,0,0,0)')
+        g.fillStyle=grd; g.beginPath(); g.arc(px,py,lamp,0,Math.PI*2); g.fill()
+        g.fillStyle='#f6d37a'; g.beginPath(); g.arc(px,py,7,0,Math.PI*2); g.fill()
+        document.getElementById('h').textContent = dead ? 'They reached the desk.' : win ? 'Dawn. The hall is yours.' : `Dawn in ${Math.ceil(45-t)}s · WASD`
+        requestAnimationFrame(loop)
+      }
+      requestAnimationFrame(loop)
+    </script>
+  </body>
+</html>
