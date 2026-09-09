@@ -31,7 +31,7 @@ export function CreatePage({
   return (
     <div className="page studio-page">
       <section className="hero compact">
-        <p className="eyebrow">Create</p>
+        <p className="eyebrow">Make</p>
         <h1>Ship a real game. We store a pointer.</h1>
         <p className="lede">
           Upload an HTML5 build, connect the GitHub repo that already hosts it, or mint a

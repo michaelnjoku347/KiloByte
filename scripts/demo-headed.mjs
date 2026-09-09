@@ -25,21 +25,21 @@ async function pause(ms = 900) {
 
 await pause(1000)
 await page.evaluate(() => {
-  const chips = [...document.querySelectorAll('.category-strip .chip')]
-  chips.find((c) => c.textContent?.includes('Simulator'))?.click()
+  const links = [...document.querySelectorAll('.kind-link')]
+  links.find((c) => c.textContent?.includes('Simulator'))?.click()
 })
 await pause(900)
-await page.click('.exp-hit')
-await page.waitForSelector('.experience')
+await page.click('.index-title')
+await page.waitForSelector('.dossier')
 await pause(1100)
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
-  buttons.find((b) => b.textContent?.trim() === 'Play')?.click()
+  buttons.find((b) => b.textContent?.trim() === 'Play this')?.click()
 })
 await pause(1600)
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
-  buttons.find((b) => b.textContent?.includes('Create'))?.click()
+  buttons.find((b) => b.textContent?.trim() === 'Make')?.click()
 })
 await page.waitForSelector('.dropzone')
 await pause(800)

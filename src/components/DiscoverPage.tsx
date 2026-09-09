@@ -22,8 +22,11 @@ export function DiscoverPage({
   onPlay: (id: string) => void
 }) {
   const featured = featuredGame(all, plays)
-  const rails = useMemo(
-    () => buildRails(all, plays, recents, mineIds, favorites),
+  const shelves = useMemo(
+    () =>
+      buildRails(all, plays, recents, mineIds, favorites).filter(
+        (shelf) => !shelf.id.startsWith('genre-'),
+      ),
     [all, plays, recents, mineIds, favorites],
   )
   const results = useMemo(
@@ -36,17 +39,17 @@ export function DiscoverPage({
 
   if (searchQuery !== undefined) {
     return (
-      <div className="page discover-page">
-        <header className="rail-head">
-          <h1>Search</h1>
+      <div className="page floor-page">
+        <header className="shelf-head">
+          <h1>Find a game</h1>
           <p className="meter-line">
-            {results.length} experience{results.length === 1 ? '' : 's'} for “{searchQuery || 'everything'}”
+            {results.length} match{results.length === 1 ? '' : 'es'} for “{searchQuery || 'everything'}”
           </p>
         </header>
         {results.length === 0 ? (
-          <p className="empty">No experiences match. Try a genre like Simulator or Puzzle.</p>
+          <p className="empty">Nothing by that name. Try Puzzle, Simulator, or a title like Dock Ledger.</p>
         ) : (
-          <div className="exp-grid">
+          <div className="shelf-grid">
             {results.map((game) => (
               <GameCard
                 key={game.id}
@@ -62,62 +65,82 @@ export function DiscoverPage({
   }
 
   return (
-    <div className="page discover-page">
+    <div className="page floor-page">
+      <section className="howto" aria-label="How Kilobyte works">
+        <ol>
+          <li>
+            <strong>1</strong>
+            <span>Pick a game from the shelf.</span>
+          </li>
+          <li>
+            <strong>2</strong>
+            <span>Press Play. It runs in this tab.</span>
+          </li>
+          <li>
+            <strong>3</strong>
+            <span>Or open Make and publish yours.</span>
+          </li>
+        </ol>
+      </section>
+
       {featured && (
-        <section className="spotlight">
-          <button
-            type="button"
-            className="spotlight-art"
-            style={{
-              background: `linear-gradient(115deg, ${featured.palette.bg} 8%, ${featured.cover} 72%)`,
-            }}
-            onClick={() => go({ name: 'game', id: featured.id })}
-          >
-            <span className="spotlight-title">{featured.title}</span>
-          </button>
-          <div className="spotlight-body">
-            <p className="eyebrow">Featured</p>
-            <h1>{featured.title}</h1>
-            <p className="lede">{featured.blurb}</p>
-            <p className="meter-line">
-              {featured.genres.join(' · ')} · {formatCount(visitScore(featured, plays))} visits · {featured.author}
-            </p>
-            <div className="hero-actions">
-              <button type="button" className="play-btn" onClick={() => onPlay(featured.id)}>
-                Play
-              </button>
-              <button type="button" className="ghost-btn" onClick={() => go({ name: 'game', id: featured.id })}>
-                Experience
-              </button>
+        <section className="lead">
+          <p className="eyebrow">Start here</p>
+          <div className="lead-spread">
+            <button
+              type="button"
+              className="lead-poster"
+              style={{
+                background: `linear-gradient(168deg, ${featured.palette.bg} 10%, ${featured.cover} 80%)`,
+              }}
+              onClick={() => go({ name: 'game', id: featured.id })}
+            >
+              <i>{featured.genres[0]}</i>
+              <span>{featured.title}</span>
+            </button>
+            <div className="lead-body">
+              <h1>{featured.title}</h1>
+              <p className="lede">{featured.blurb}</p>
+              <p className="meter-line">
+                {featured.genres.join(' · ')} · {formatCount(visitScore(featured, plays))} plays ·{' '}
+                {featured.author}
+              </p>
+              <div className="hero-actions">
+                <button type="button" className="play-btn" onClick={() => onPlay(featured.id)}>
+                  Play this
+                </button>
+                <button type="button" className="ghost-btn" onClick={() => go({ name: 'game', id: featured.id })}>
+                  Read the card
+                </button>
+              </div>
             </div>
           </div>
         </section>
       )}
 
-      <div className="category-strip" aria-label="Categories">
-        {CHART_GENRES.map((genre) => (
-          <button key={genre} type="button" className="chip" onClick={() => go({ name: 'charts', genre })}>
-            {genre}
-          </button>
-        ))}
-      </div>
+      <nav className="kind-index" aria-label="Kinds of games">
+        <p className="kind-label">Jump by kind</p>
+        <div className="kind-links">
+          {CHART_GENRES.map((genre) => (
+            <button key={genre} type="button" className="kind-link" onClick={() => go({ name: 'charts', genre })}>
+              {genre}
+            </button>
+          ))}
+        </div>
+      </nav>
 
-      {rails.map((rail) => (
-        <section key={rail.id} className="rail" data-rail={rail.id}>
-          <header className="rail-head">
-            <h2>{rail.title}</h2>
-            {rail.id.startsWith('genre-') && (
-              <button
-                type="button"
-                className="text-btn"
-                onClick={() => go({ name: 'charts', genre: rail.title })}
-              >
-                See all
+      {shelves.map((shelf) => (
+        <section key={shelf.id} className="shelf" data-rail={shelf.id}>
+          <header className="shelf-head">
+            <h2>{shelf.title}</h2>
+            {shelf.id === 'recommended' && (
+              <button type="button" className="text-btn" onClick={() => go({ name: 'charts' })}>
+                Full catalog
               </button>
             )}
           </header>
-          <div className="rail-track">
-            {rail.games.map((game) => (
+          <div className="shelf-grid">
+            {shelf.games.map((game) => (
               <GameCard
                 key={game.id}
                 game={game}

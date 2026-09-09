@@ -1,6 +1,6 @@
-# Kilobyte Arcade
+# Kilobyte
 
-A launchable public arcade shaped like a Discover lobby: people **scroll experience rails**, **open Charts**, **search any genre**, **play in the browser**, and **publish** by uploading a build or connecting a GitHub repo. You do not store Unity/WebGL binaries.
+A paper catalog of browser games: people **pick a title**, **press Play**, and **publish** by uploading a build or connecting a GitHub repo. You do not store Unity/WebGL binaries.
 
 ## Launch it
 
@@ -18,7 +18,7 @@ Visitors play for free. Creators publish for free. Your bill stays at hosting a 
 
 | Method | What you store | Who pays for the files |
 | --- | --- | --- |
-| **Connect GitHub** | Title, genres, `owner/repo`, play URL | GitHub / jsDelivr |
+| **Connect GitHub** | Title, kinds, `owner/repo`, play URL | GitHub / jsDelivr |
 | **Upload zip or HTML** | Metadata + files in the creator’s IndexedDB | The creator’s browser |
 | **Mint a JSON cart** | ~1 KB recipe | Nobody |
 
@@ -26,11 +26,11 @@ GitHub is the production path for “literally any game”: a Phaser project, a 
 
 ## Product
 
-- **Discover**: featured experience, category chips, Continue / Recommended / genre rails
-- **Charts**: visit-ranked lists, filterable by genre
-- Search in the top bar; per-experience page with a large Play button, About, and Recommended
+- **Play**: numbered how-to, today’s pick, wrapping shelf of portrait cards
+- **Catalog**: a ranked table of every game, filterable by kind
+- Find a title from the masthead; each card has Play, Save, and “what this is”
 - Player: iframe for HTML/GitHub, built-in engine for carts
-- Create: Upload files/folder/zip · Inspect + publish a public repo · optional cart mint
+- Make: Upload files/folder/zip · Inspect + publish a public repo · optional cart mint
 - House library across Simulator, Shooter, Puzzle, Horror, Rhythm, Strategy, Racing, Idle, and arcade carts
 - Optional Gemini / GitHub tokens stay in `localStorage` on the visitor’s machine
 

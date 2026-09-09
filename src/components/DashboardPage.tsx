@@ -34,33 +34,31 @@ export function DashboardPage({
   return (
     <div className="page dash-page">
       <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
-        ← Discover
+        ← Back to the floor
       </button>
-      <section className="experience">
+      <section className="dossier">
         <div
-          className="experience-cover"
-          style={{ background: `linear-gradient(145deg, ${game.palette.bg}, ${game.cover})` }}
+          className="dossier-poster"
+          style={{ background: `linear-gradient(168deg, ${game.palette.bg}, ${game.cover})` }}
         >
+          <i>{game.genres[0] || 'Game'}</i>
           <span>{game.title}</span>
         </div>
-        <div className="experience-side">
-          <p className="eyebrow">{game.genres.join(' · ') || 'Experience'}</p>
+        <div className="dossier-side">
+          <p className="eyebrow">{game.genres.join(' · ') || 'Game'}</p>
           <h1>{game.title}</h1>
-          <p className="creator-row">
-            <i className="avatar">{game.author.slice(0, 1)}</i>
-            {game.author}
-          </p>
+          <p className="creator-row">by {game.author}</p>
           <p className="lede">{game.blurb}</p>
           <p className="meter-line">
-            {formatCount(visits)} visits · {plays} on this device
+            {formatCount(visits)} plays · {plays} on this device
             {game.bytes ? ` · ${formatBytes(game.bytes)} local` : ' · hosted off-site'}
           </p>
           <div className="hero-actions">
             <button type="button" className="play-btn" onClick={onPlay}>
-              Play
+              Play this
             </button>
             <button type="button" className={`ghost-btn ${favorited ? 'on-fav' : ''}`} onClick={onFavorite}>
-              {favorited ? 'Favorited' : 'Favorite'}
+              {favorited ? 'Saved' : 'Save'}
             </button>
             {github && (
               <a className="ghost-btn link-btn" href={github} target="_blank" rel="noreferrer">
@@ -82,7 +80,7 @@ export function DashboardPage({
       </section>
 
       <section className="panel about-panel">
-        <h2>About this experience</h2>
+        <h2>What this is</h2>
         <p className="dash-copy">{game.description}</p>
         <dl className="spec-dl">
           <div>
@@ -94,29 +92,24 @@ export function DashboardPage({
             <dd>{sourceLabel(game.source)}</dd>
           </div>
           <div>
-            <dt>Genres</dt>
+            <dt>Kinds</dt>
             <dd>{game.genres.join(', ') || '—'}</dd>
           </div>
           <div>
-            <dt>Kind</dt>
+            <dt>Kind of file</dt>
             <dd>{game.source.kind}</dd>
           </div>
         </dl>
       </section>
 
       {related.length > 0 && (
-        <section className="rail">
-          <header className="rail-head">
-            <h2>Recommended</h2>
+        <section className="shelf">
+          <header className="shelf-head">
+            <h2>Nearby on the shelf</h2>
           </header>
-          <div className="rail-track">
+          <div className="shelf-grid">
             {related.map((item) => (
-              <GameCard
-                key={item.id}
-                game={item}
-                compact
-                onPlay={() => onPlayOther(item.id)}
-              />
+              <GameCard key={item.id} game={item} compact onPlay={() => onPlayOther(item.id)} />
             ))}
           </div>
         </section>

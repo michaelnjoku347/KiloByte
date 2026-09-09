@@ -47,17 +47,17 @@ export function buildRails(
   const byId = new Map(games.map((g) => [g.id, g]))
   const rails: Rail[] = []
   const continued = recents.map((id) => byId.get(id)).filter((g): g is GameRecord => Boolean(g))
-  if (continued.length) rails.push({ id: 'continue', title: 'Continue', games: continued })
+  if (continued.length) rails.push({ id: 'continue', title: 'You were here', games: continued })
   const liked = favorites.map((id) => byId.get(id)).filter((g): g is GameRecord => Boolean(g))
-  if (liked.length) rails.push({ id: 'favorites', title: 'Favorites', games: liked })
+  if (liked.length) rails.push({ id: 'favorites', title: 'Saved', games: liked })
   const recommended = rankGames(games, plays).slice(0, 12)
   if (recommended.length) {
-    rails.push({ id: 'recommended', title: 'Recommended for you', games: recommended })
+    rails.push({ id: 'recommended', title: 'Worth a look', games: recommended })
   }
   const upcoming = [...games].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10)
-  if (upcoming.length) rails.push({ id: 'upcoming', title: 'Up-and-coming', games: upcoming })
+  if (upcoming.length) rails.push({ id: 'upcoming', title: 'Just in', games: upcoming })
   const mine = games.filter((g) => mineIds.has(g.id))
-  if (mine.length) rails.push({ id: 'yours', title: 'Your experiences', games: mine })
+  if (mine.length) rails.push({ id: 'yours', title: 'You published', games: mine })
   for (const genre of CHART_GENRES) {
     const list = games.filter((g) => g.genres.some((x) => x.toLowerCase() === genre.toLowerCase()))
     if (list.length) {

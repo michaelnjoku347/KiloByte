@@ -97,7 +97,7 @@ describe('routes', () => {
     expect(toHash({ name: 'create', tab: 'upload' })).toBe('#/create/upload')
   })
 
-  it('parses Discover-style charts and search hashes', () => {
+  it('parses catalog and search hashes', () => {
     expect(parseHash('#/charts/Simulator')).toEqual({ name: 'charts', genre: 'Simulator' })
     expect(parseHash('#/search/dock')).toEqual({ name: 'search', query: 'dock' })
     expect(toHash({ name: 'charts', genre: 'Puzzle' })).toBe('#/charts/Puzzle')
@@ -105,8 +105,8 @@ describe('routes', () => {
   })
 })
 
-describe('discover rails', () => {
-  it('formats visit counts and builds Continue / Recommended / genre rails', () => {
+describe('catalog shelves', () => {
+  it('formats play counts and builds You were here / Worth a look / kind shelves', () => {
     expect(formatCount(22100)).toBe('22K')
     expect(formatCount(980)).toBe('980')
     const games = [

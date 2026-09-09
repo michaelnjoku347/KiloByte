@@ -15,9 +15,9 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
         <p className="eyebrow">Launch storage</p>
         <h1>You do not host the games. You host the catalog.</h1>
         <p className="lede">
-          A launchable arcade is a search index, dashboards, and a player. The expensive
-          files live on GitHub or on the creator’s machine. That is how this stays free
-          for you when people publish simulators, shooters, puzzles — anything.
+          Kilobyte is a paper catalog plus a player. The expensive files live on GitHub
+          or on the maker’s machine. That is how this stays free when people publish
+          simulators, shooters, puzzles — anything.
         </p>
       </section>
 

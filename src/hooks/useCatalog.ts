@@ -47,7 +47,7 @@ export function useCatalog() {
     setRecents((list) => list.filter((x) => x !== id))
     setFavorites((list) => list.filter((x) => x !== id))
     await deleteBundle(id).catch(() => undefined)
-    flash('Removed from Discover')
+    flash('Removed from the catalog')
   }
 
   const bumpPlays = (id: string) => {

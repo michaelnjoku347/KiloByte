@@ -21,48 +21,50 @@ await page.reload({ waitUntil: 'networkidle0' })
 const brand = await page.$eval('.wordmark span', (el) => el.textContent)
 if (brand !== 'Kilobyte') throw new Error('expected Kilobyte wordmark')
 
-await page.waitForSelector('.spotlight')
-await page.waitForSelector('.exp-tile')
-const count = await page.$$eval('.exp-tile', (els) => els.length)
-if (count < 12) throw new Error(`expected Discover rails with a full house library, got ${count}`)
-console.log('discover tiles', count)
+await page.waitForSelector('.howto')
+await page.waitForSelector('.lead')
+await page.waitForSelector('.plate')
+const count = await page.$$eval('.plate', (els) => els.length)
+if (count < 8) throw new Error(`expected a catalog shelf, got ${count} plates`)
+console.log('floor plates', count)
 
 const simulator = await page.evaluate(() => {
-  const chips = [...document.querySelectorAll('.category-strip .chip')]
-  const btn = chips.find((c) => c.textContent?.includes('Simulator'))
+  const links = [...document.querySelectorAll('.kind-link')]
+  const btn = links.find((c) => c.textContent?.includes('Simulator'))
   btn?.click()
   return Boolean(btn)
 })
-if (!simulator) throw new Error('simulator category missing')
+if (!simulator) throw new Error('simulator kind missing')
 await page.waitForFunction(() => location.hash.includes('/charts/Simulator'))
+await page.waitForSelector('.index-table')
 await page.waitForFunction(() => document.body.innerText.includes('Dock Ledger'))
-console.log('charts genre ok')
+console.log('catalog kind ok')
 
-await page.click('.exp-hit')
-await page.waitForSelector('.experience')
-await page.waitForFunction(() => document.body.innerText.includes('About this experience'))
-console.log('experience page ok')
+await page.click('.index-title')
+await page.waitForSelector('.dossier')
+await page.waitForFunction(() => document.body.innerText.includes('What this is'))
+console.log('game card ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
-  buttons.find((b) => b.textContent?.trim() === 'Play')?.click()
+  buttons.find((b) => b.textContent?.trim() === 'Play this')?.click()
 })
 await page.waitForSelector('canvas, iframe.game-frame')
 console.log('play ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
-  buttons.find((b) => b.textContent?.includes('Create'))?.click()
+  buttons.find((b) => b.textContent?.trim() === 'Make')?.click()
 })
 await page.waitForSelector('.dropzone')
-console.log('create upload ok')
+console.log('make upload ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
   buttons.find((b) => b.textContent?.includes('Connect GitHub'))?.click()
 })
 await page.waitForFunction(() => document.body.innerText.includes('Inspect repo'))
-console.log('create github ok')
+console.log('make github ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]

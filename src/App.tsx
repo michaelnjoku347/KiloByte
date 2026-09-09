@@ -86,7 +86,7 @@ function App() {
         go({ name: 'game', id: spec.id })
         return
       }
-      catalog.flash('Use Create → Upload for zips and HTML builds')
+      catalog.flash('Use Make → Upload for zips and HTML builds')
       go({ name: 'create', tab: 'upload' })
     } catch {
       catalog.flash('Could not import that file')
@@ -100,28 +100,29 @@ function App() {
       <header className="topbar">
         <button type="button" className="wordmark" onClick={() => go({ name: 'arcade' })}>
           <span>Kilobyte</span>
+          <small>the catalog</small>
         </button>
         <nav className="nav">
           <button
             type="button"
-            className={route.name === 'arcade' ? 'on' : ''}
+            className={route.name === 'arcade' || route.name === 'search' ? 'on' : ''}
             onClick={() => go({ name: 'arcade' })}
           >
-            Discover
+            Play
           </button>
           <button
             type="button"
             className={route.name === 'charts' ? 'on' : ''}
             onClick={() => go({ name: 'charts' })}
           >
-            Charts
+            Catalog
           </button>
           <button
             type="button"
             className={route.name === 'create' ? 'on' : ''}
             onClick={() => go({ name: 'create', tab: 'upload' })}
           >
-            Create
+            Make
           </button>
           <button
             type="button"
@@ -139,11 +140,11 @@ function App() {
           }}
         >
           <label>
-            <span className="sr-only">Search experiences</span>
+            <span className="find-label">Find</span>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search experiences"
+              placeholder="a title or kind"
             />
           </label>
         </form>
@@ -161,7 +162,7 @@ function App() {
               }}
             />
           </label>
-          <span className="avatar" title={catalog.settings.author}>
+          <span className="seal" title={catalog.settings.author}>
             {initials}
           </span>
         </div>
@@ -231,7 +232,7 @@ function App() {
           />
         )}
         {(route.name === 'game' || route.name === 'play') && !current && (
-          <p className="empty pad">Experience missing on this device.</p>
+          <p className="empty pad">That game is not on this device.</p>
         )}
         {route.name === 'share' && (
           <SharedCart
@@ -245,8 +246,8 @@ function App() {
       </main>
 
       <footer className="footer">
-        <span>Discover · Charts · Create — files stay on GitHub or the creator’s machine</span>
-        <span>{catalog.all.length} experiences</span>
+        <span>A catalog, not a file host — games stay on GitHub or the maker’s machine</span>
+        <span>{catalog.all.length} games</span>
       </footer>
       {catalog.toast && (
         <div className="toast" role="status">

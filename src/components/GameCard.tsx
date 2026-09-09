@@ -19,34 +19,29 @@ export function GameCard({
   const visits = visitScore(game, { [game.id]: plays })
 
   return (
-    <article className={`exp-tile ${compact ? 'compact' : ''}`}>
-      <button
-        type="button"
-        className="exp-hit"
-        onClick={() => go({ name: 'game', id: game.id })}
-      >
+    <article className={`plate ${compact ? 'compact' : ''}`}>
+      <button type="button" className="plate-hit" onClick={() => go({ name: 'game', id: game.id })}>
         <span
-          className="exp-thumb"
+          className="plate-face"
           style={{
-            background: `linear-gradient(152deg, ${game.palette.bg} 10%, ${game.cover} 78%)`,
+            background: `linear-gradient(168deg, ${game.palette.bg} 12%, ${game.cover} 88%)`,
           }}
         >
-          {rank !== undefined && <em className="exp-rank">{rank}</em>}
-          <strong className="exp-mono">{game.title.slice(0, 2)}</strong>
-          <i className="exp-genre">{game.genres[0] || 'Game'}</i>
+          {rank !== undefined && <em className="plate-rank">{rank}</em>}
+          <i className="plate-kind">{game.genres[0] || 'Game'}</i>
+          <strong className="plate-mark">{game.title}</strong>
         </span>
-        <span className="exp-copy">
+        <span className="plate-copy">
           <strong>{game.title}</strong>
           <small>
-            <span className="exp-dot" aria-hidden />
-            {formatCount(visits)}
+            {formatCount(visits)} plays · {game.author}
           </small>
         </span>
       </button>
       {onPlay && (
         <button
           type="button"
-          className="exp-join"
+          className="plate-play"
           onClick={(e) => {
             e.stopPropagation()
             onPlay()
