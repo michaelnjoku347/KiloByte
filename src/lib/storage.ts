@@ -1,7 +1,8 @@
-import type { ArcadeSettings, ArcadeState, GameRecord, GameSpec } from '../types'
+import type { ArcadeSettings, ArcadeState, GameRecord, GameSpec, UserProfile } from '../types'
 import { HOUSE_CARTS } from '../data/house'
 import { HOUSE_GAMES } from '../data/catalog'
 import { recordFromCart } from './record'
+import { parseTheme } from './theme'
 
 export const STORAGE_KEY = 'kilobyte.arcade.v2'
 export const LEGACY_KEY = 'kilobyte.arcade.v1'
@@ -10,10 +11,34 @@ export const DEFAULT_SETTINGS: ArcadeSettings = {
   author: 'Anonymous',
   geminiKey: '',
   githubToken: '',
+  theme: 'light',
 }
 
 export function emptyState(): ArcadeState {
-  return { games: [], settings: DEFAULT_SETTINGS, plays: {}, recents: [], favorites: [] }
+  return {
+    games: [],
+    settings: DEFAULT_SETTINGS,
+    plays: {},
+    recents: [],
+    favorites: [],
+    profile: null,
+    signedIn: false,
+  }
+}
+
+function readProfile(value: unknown): UserProfile | null {
+  if (!value || typeof value !== 'object') return null
+  const raw = value as Partial<UserProfile>
+  if (typeof raw.handle !== 'string' || typeof raw.displayName !== 'string') return null
+  return {
+    handle: raw.handle,
+    displayName: raw.displayName,
+    bio: typeof raw.bio === 'string' ? raw.bio : '',
+    createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString(),
+    salt: typeof raw.salt === 'string' ? raw.salt : undefined,
+    hash: typeof raw.hash === 'string' ? raw.hash : undefined,
+    githubLogin: typeof raw.githubLogin === 'string' ? raw.githubLogin : undefined,
+  }
 }
 
 function migrateLegacy(): GameRecord[] {
@@ -37,6 +62,8 @@ export function loadState(): ArcadeState {
         plays: {},
         recents: [],
         favorites: [],
+        profile: null,
+        signedIn: false,
       }
     }
     const parsed = JSON.parse(raw) as Partial<ArcadeState> & { carts?: GameSpec[] }
@@ -52,12 +79,15 @@ export function loadState(): ArcadeState {
         author: parsed.settings?.author?.trim() || DEFAULT_SETTINGS.author,
         geminiKey: parsed.settings?.geminiKey ?? '',
         githubToken: parsed.settings?.githubToken ?? '',
+        theme: parseTheme(parsed.settings?.theme),
       },
       plays: parsed.plays && typeof parsed.plays === 'object' ? parsed.plays : {},
       recents: Array.isArray(parsed.recents) ? parsed.recents.filter((id) => typeof id === 'string') : [],
       favorites: Array.isArray(parsed.favorites)
         ? parsed.favorites.filter((id) => typeof id === 'string')
         : [],
+      profile: readProfile(parsed.profile),
+      signedIn: Boolean(parsed.signedIn && readProfile(parsed.profile)),
     }
   } catch {
     return emptyState()
@@ -73,6 +103,8 @@ export function saveState(state: ArcadeState): void {
       plays: state.plays,
       recents: state.recents,
       favorites: state.favorites,
+      profile: state.profile,
+      signedIn: state.signedIn,
     }),
   )
 }

@@ -16,6 +16,7 @@ import { GenrePicker } from './GenrePicker'
 export function CreatePage({
   tab,
   settings,
+  signedIn,
   onSettings,
   onPublishCart,
   onPublishGame,
@@ -23,6 +24,7 @@ export function CreatePage({
 }: {
   tab: CreateTab
   settings: ArcadeSettings
+  signedIn: boolean
   onSettings: (settings: ArcadeSettings) => void
   onPublishCart: (spec: GameSpec) => void
   onPublishGame: (game: GameRecord, files?: BundleFile[]) => Promise<void>
@@ -57,25 +59,76 @@ export function CreatePage({
         ))}
       </div>
       {tab === 'upload' && (
-        <UploadForm settings={settings} onSettings={onSettings} onPublishGame={onPublishGame} flash={flash} />
+        <UploadForm
+          settings={settings}
+          signedIn={signedIn}
+          onSettings={onSettings}
+          onPublishGame={onPublishGame}
+          flash={flash}
+        />
       )}
       {tab === 'github' && (
-        <GithubForm settings={settings} onSettings={onSettings} onPublishGame={onPublishGame} flash={flash} />
+        <GithubForm
+          settings={settings}
+          signedIn={signedIn}
+          onSettings={onSettings}
+          onPublishGame={onPublishGame}
+          flash={flash}
+        />
       )}
       {tab === 'generate' && (
-        <GenerateForm settings={settings} onSettings={onSettings} onPublishCart={onPublishCart} flash={flash} />
+        <GenerateForm
+          settings={settings}
+          signedIn={signedIn}
+          onSettings={onSettings}
+          onPublishCart={onPublishCart}
+          flash={flash}
+        />
       )}
     </div>
   )
 }
 
+function PublisherName({
+  settings,
+  signedIn,
+  onSettings,
+}: {
+  settings: ArcadeSettings
+  signedIn: boolean
+  onSettings: (settings: ArcadeSettings) => void
+}) {
+  if (signedIn) {
+    return (
+      <p className="meter-line publisher-line">
+        Publishing as <strong>{settings.author}</strong>
+        {' · '}
+        <button type="button" className="text-btn" onClick={() => go({ name: 'you' })}>
+          Your card
+        </button>
+      </p>
+    )
+  }
+  return (
+    <label className="field">
+      <span>Your name on the card</span>
+      <input
+        value={settings.author}
+        onChange={(e) => onSettings({ ...settings, author: e.target.value })}
+      />
+    </label>
+  )
+}
+
 function UploadForm({
   settings,
+  signedIn,
   onSettings,
   onPublishGame,
   flash,
 }: {
   settings: ArcadeSettings
+  signedIn: boolean
   onSettings: (settings: ArcadeSettings) => void
   onPublishGame: (game: GameRecord, files?: BundleFile[]) => Promise<void>
   flash: (message: string) => void
@@ -139,13 +192,7 @@ function UploadForm({
   return (
     <div className="studio-grid">
       <section className="panel">
-        <label className="field">
-          <span>Your name on the dashboard</span>
-          <input
-            value={settings.author}
-            onChange={(e) => onSettings({ ...settings, author: e.target.value })}
-          />
-        </label>
+        <PublisherName settings={settings} signedIn={signedIn} onSettings={onSettings} />
         <div
           className="dropzone"
           onDragOver={(e) => e.preventDefault()}
@@ -224,11 +271,13 @@ function UploadForm({
 
 function GithubForm({
   settings,
+  signedIn,
   onSettings,
   onPublishGame,
   flash,
 }: {
   settings: ArcadeSettings
+  signedIn: boolean
   onSettings: (settings: ArcadeSettings) => void
   onPublishGame: (game: GameRecord, files?: BundleFile[]) => Promise<void>
   flash: (message: string) => void
@@ -345,13 +394,7 @@ function GithubForm({
         </label>
       </section>
       <section className="panel">
-        <label className="field">
-          <span>Your name on the dashboard</span>
-          <input
-            value={settings.author}
-            onChange={(e) => onSettings({ ...settings, author: e.target.value })}
-          />
-        </label>
+        <PublisherName settings={settings} signedIn={signedIn} onSettings={onSettings} />
         <label className="field">
           <span>Title</span>
           <input value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -375,11 +418,13 @@ function GithubForm({
 
 function GenerateForm({
   settings,
+  signedIn,
   onSettings,
   onPublishCart,
   flash,
 }: {
   settings: ArcadeSettings
+  signedIn: boolean
   onSettings: (settings: ArcadeSettings) => void
   onPublishCart: (spec: GameSpec) => void
   flash: (message: string) => void
@@ -410,13 +455,7 @@ function GenerateForm({
   return (
     <div className="studio-grid">
       <section className="panel">
-        <label className="field">
-          <span>Player name</span>
-          <input
-            value={settings.author}
-            onChange={(e) => onSettings({ ...settings, author: e.target.value })}
-          />
-        </label>
+        <PublisherName settings={settings} signedIn={signedIn} onSettings={onSettings} />
         <label className="field">
           <span>Describe a cart-sized game</span>
           <textarea rows={5} value={prompt} onChange={(e) => setPrompt(e.target.value)} />

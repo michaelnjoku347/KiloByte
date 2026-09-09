@@ -1,10 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ArcadeSettings, GameRecord, GameSpec } from '../types'
-import { loadState, localWeight, publishedGames, saveState, upsertGame } from '../lib/storage'
+import type { ArcadeSettings, GameRecord, GameSpec, SiteTheme, UserProfile } from '../types'
+import {
+  DEFAULT_SETTINGS,
+  loadState,
+  localWeight,
+  publishedGames,
+  saveState,
+  upsertGame,
+} from '../lib/storage'
 import { recordFromCart } from '../lib/record'
 import { deleteBundle, saveBundle } from '../lib/idb'
 import type { BundleFile } from '../lib/bundle'
 import { bundleBytes, bundleToRecord } from '../lib/bundle'
+import {
+  checkPassphrase,
+  hasPassphrase,
+  makeProfile,
+  parseBio,
+  parseDisplayName,
+  sealPassphrase,
+} from '../lib/profile'
+import { applyTheme, parseTheme } from '../lib/theme'
 
 export function useCatalog() {
   const initial = loadState()
@@ -13,11 +29,17 @@ export function useCatalog() {
   const [plays, setPlays] = useState<Record<string, number>>(() => initial.plays)
   const [recents, setRecents] = useState<string[]>(() => initial.recents)
   const [favorites, setFavorites] = useState<string[]>(() => initial.favorites)
+  const [profile, setProfile] = useState<UserProfile | null>(() => initial.profile)
+  const [signedIn, setSignedIn] = useState(() => initial.signedIn)
   const [toast, setToast] = useState('')
 
   useEffect(() => {
-    saveState({ games, settings, plays, recents, favorites })
-  }, [games, settings, plays, recents, favorites])
+    saveState({ games, settings, plays, recents, favorites, profile, signedIn })
+  }, [games, settings, plays, recents, favorites, profile, signedIn])
+
+  useEffect(() => {
+    applyTheme(parseTheme(settings.theme))
+  }, [settings.theme])
 
   const flash = (message: string) => {
     setToast(message)
@@ -25,8 +47,8 @@ export function useCatalog() {
   }
 
   const all = useMemo(
-    () => publishedGames({ games, settings, plays, recents, favorites }),
-    [games, settings, plays, recents, favorites],
+    () => publishedGames({ games, settings, plays, recents, favorites, profile, signedIn }),
+    [games, settings, plays, recents, favorites, profile, signedIn],
   )
   const mineIds = useMemo(() => new Set(games.map((g) => g.id)), [games])
 
@@ -61,6 +83,65 @@ export function useCatalog() {
 
   const find = (id: string) => all.find((g) => g.id === id)
 
+  const signUp = async (input: {
+    displayName: string
+    handle: string
+    bio?: string
+    passphrase?: string
+  }) => {
+    const next = await makeProfile(input)
+    setProfile(next)
+    setSignedIn(true)
+    setSettings((prev) => ({ ...prev, author: next.displayName }))
+    flash(`Card made for @${next.handle}`)
+  }
+
+  const signIn = async (passphrase?: string) => {
+    if (!profile) throw new Error('No card on this device yet.')
+    if (hasPassphrase(profile)) {
+      const ok = await checkPassphrase(passphrase ?? '', profile.salt ?? '', profile.hash ?? '')
+      if (!ok) throw new Error('That passphrase does not match.')
+    }
+    setSignedIn(true)
+    setSettings((prev) => ({ ...prev, author: profile.displayName }))
+    flash(`Signed in as @${profile.handle}`)
+  }
+
+  const signOut = () => {
+    setSignedIn(false)
+    setSettings((prev) => ({ ...prev, author: DEFAULT_SETTINGS.author }))
+    flash('Playing as a guest')
+  }
+
+  const updateProfile = async (patch: { displayName?: string; bio?: string; passphrase?: string }) => {
+    if (!profile) throw new Error('No card on this device yet.')
+    const next: UserProfile = {
+      ...profile,
+      displayName: patch.displayName !== undefined ? parseDisplayName(patch.displayName) : profile.displayName,
+      bio: patch.bio !== undefined ? parseBio(patch.bio) : profile.bio,
+    }
+    const phrase = patch.passphrase?.trim()
+    if (phrase) {
+      const sealed = await sealPassphrase(phrase)
+      next.salt = sealed.salt
+      next.hash = sealed.hash
+    }
+    setProfile(next)
+    setSettings((prev) => ({ ...prev, author: next.displayName }))
+    flash('Card updated')
+  }
+
+  const removeProfile = () => {
+    setProfile(null)
+    setSignedIn(false)
+    setSettings((prev) => ({ ...prev, author: DEFAULT_SETTINGS.author }))
+    flash('Card removed from this browser')
+  }
+
+  const setTheme = (theme: SiteTheme) => {
+    setSettings((prev) => ({ ...prev, theme }))
+  }
+
   return {
     all,
     mine: games,
@@ -70,6 +151,8 @@ export function useCatalog() {
     plays,
     recents,
     favorites,
+    profile,
+    signedIn,
     toast,
     flash,
     publish,
@@ -78,6 +161,12 @@ export function useCatalog() {
     bumpPlays,
     toggleFavorite,
     find,
+    signUp,
+    signIn,
+    signOut,
+    updateProfile,
+    removeProfile,
+    setTheme,
     bytes: localWeight(all),
   }
 }

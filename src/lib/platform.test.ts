@@ -8,6 +8,8 @@ import { parseHash, toHash } from './route'
 import { emptyState, houseLibrary, upsertGame } from './storage'
 import { recordFromCart } from './record'
 import { compileCart } from './generate'
+import { checkPassphrase, makeProfile, normalizeHandle, parseHandle } from './profile'
+import { parseTheme } from './theme'
 import type { GameRecord } from '../types'
 
 function fakeGame(partial: Partial<GameRecord> & Pick<GameRecord, 'id' | 'title' | 'genres'>): GameRecord {
@@ -97,11 +99,14 @@ describe('routes', () => {
     expect(toHash({ name: 'create', tab: 'upload' })).toBe('#/create/upload')
   })
 
-  it('parses catalog and search hashes', () => {
+  it('parses catalog, search, and you hashes', () => {
     expect(parseHash('#/charts/Simulator')).toEqual({ name: 'charts', genre: 'Simulator' })
     expect(parseHash('#/search/dock')).toEqual({ name: 'search', query: 'dock' })
+    expect(parseHash('#/you')).toEqual({ name: 'you' })
+    expect(parseHash('#/profile')).toEqual({ name: 'you' })
     expect(toHash({ name: 'charts', genre: 'Puzzle' })).toBe('#/charts/Puzzle')
     expect(toHash({ name: 'search', query: 'dock ledger' })).toBe('#/search/dock%20ledger')
+    expect(toHash({ name: 'you' })).toBe('#/you')
   })
 })
 
@@ -162,5 +167,26 @@ describe('cabinet storage', () => {
     expect(twice).toHaveLength(1)
     expect(twice[0].title).toBe('Tide Pocket')
     expect(twice[0].house).toBe(false)
+  })
+})
+
+describe('profile cards', () => {
+  it('normalizes handles and seals an optional passphrase', async () => {
+    expect(normalizeHandle(' Mina Oak ')).toBe('minaoak')
+    expect(parseHandle('mina_ok')).toBe('mina_ok')
+    expect(() => parseHandle('ab')).toThrow(/3 letters/)
+    expect(parseTheme('dark')).toBe('dark')
+    expect(parseTheme('nope')).toBe('light')
+    const card = await makeProfile({
+      displayName: 'Mina Oak',
+      handle: 'Mina_Oak',
+      bio: 'harbor nights',
+      passphrase: 'secret1',
+    })
+    expect(card.handle).toBe('mina_oak')
+    expect(card.displayName).toBe('Mina Oak')
+    expect(card.hash).toBeTruthy()
+    expect(await checkPassphrase('secret1', card.salt ?? '', card.hash ?? '')).toBe(true)
+    expect(await checkPassphrase('wrongone', card.salt ?? '', card.hash ?? '')).toBe(false)
   })
 })

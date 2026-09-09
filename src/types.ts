@@ -110,6 +110,19 @@ export type ArcadeSettings = {
   author: string
   geminiKey: string
   githubToken: string
+  theme: SiteTheme
+}
+
+export type SiteTheme = 'light' | 'dark'
+
+export type UserProfile = {
+  handle: string
+  displayName: string
+  bio: string
+  createdAt: string
+  salt?: string
+  hash?: string
+  githubLogin?: string
 }
 
 export type ArcadeState = {
@@ -118,6 +131,8 @@ export type ArcadeState = {
   plays: Record<string, number>
   recents: string[]
   favorites: string[]
+  profile: UserProfile | null
+  signedIn: boolean
 }
 
 export type CreateTab = 'generate' | 'upload' | 'github'
@@ -128,6 +143,7 @@ export type Route =
   | { name: 'search'; query: string }
   | { name: 'create'; tab: CreateTab }
   | { name: 'why' }
+  | { name: 'you' }
   | { name: 'game'; id: string }
   | { name: 'play'; id: string }
   | { name: 'share'; payload: string }
