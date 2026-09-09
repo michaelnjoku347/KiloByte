@@ -31,9 +31,9 @@ export function ChartsPage({
     <div className="page catalog-page">
       <header className="catalog-hero">
         <p className="eyebrow">Catalog</p>
-        <h1>{genre ? `${genre} in the cabinet` : 'Everything on the shelf'}</h1>
+        <h1>{genre ? genre : 'All games'}</h1>
         <p className="lede">
-          Same games as the floor, lined up by star rating. Pick a row and press Play.
+          Ranked by star rating. Open a title or press Play.
         </p>
       </header>
       <div className="kind-index" role="tablist" aria-label="Catalog kind">

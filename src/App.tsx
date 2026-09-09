@@ -104,7 +104,7 @@ function App() {
       <header className="topbar">
         <button type="button" className="wordmark" onClick={() => go({ name: 'arcade' })}>
           <span>Kilobyte</span>
-          <small>the catalog</small>
+          <small>games</small>
         </button>
         <nav className="nav">
           <button
@@ -148,7 +148,7 @@ function App() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="a title or kind"
+              placeholder="Search games"
             />
           </label>
         </form>
@@ -275,7 +275,7 @@ function App() {
       </main>
 
       <footer className="footer">
-        <span>A catalog, not a file host — games stay on GitHub or the maker’s machine</span>
+        <span>Games stay on GitHub or the maker’s machine — this site is just the catalog</span>
         <span>{catalog.all.length} games</span>
       </footer>
       {catalog.toast && (

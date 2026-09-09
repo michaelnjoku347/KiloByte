@@ -45,7 +45,7 @@ export function DashboardPage({
   return (
     <div className="page dash-page">
       <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
-        ← Back to the floor
+        ← Back
       </button>
       <section className="dossier">
         <div

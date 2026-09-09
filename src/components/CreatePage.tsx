@@ -34,10 +34,10 @@ export function CreatePage({
     <div className="page studio-page">
       <section className="hero compact">
         <p className="eyebrow">Make</p>
-        <h1>Ship a real game. We store a pointer.</h1>
+        <h1>Publish a game. We store a pointer.</h1>
         <p className="lede">
           Upload an HTML5 build, connect the GitHub repo that already hosts it, or mint a
-          tiny JSON cart. Any genre. The arcade keeps metadata; your files stay cheap.
+          tiny JSON cart. Kilobyte keeps the listing; your files stay cheap.
         </p>
       </section>
       <div className="filters create-tabs" role="tablist" aria-label="Create method">

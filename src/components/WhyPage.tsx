@@ -15,7 +15,7 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
         <p className="eyebrow">Launch storage</p>
         <h1>You do not host the games. You host the catalog.</h1>
         <p className="lede">
-          Kilobyte is a paper catalog plus a player. The expensive files live on GitHub
+          Kilobyte is a catalog plus a player. The expensive files live on GitHub
           or on the maker’s machine. That is how this stays free when people publish
           simulators, shooters, puzzles — anything.
         </p>
@@ -28,7 +28,7 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
           <p>One WebGL drop. A real catalog of those becomes a bill.</p>
         </article>
         <article className="panel stat-card">
-          <p className="eyebrow">What this cabinet holds locally</p>
+          <p className="eyebrow">On this device</p>
           <strong>{formatBytes(local)}</strong>
           <p>
             {carts.length} listings · {github} GitHub-hosted · {uploads} device uploads
@@ -67,7 +67,7 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
         <li>
           <h2>4. Dashboards are text</h2>
           <p>
-            Title, genres, description, play counts. Search and filter run on that text.
+            Title, genres, description, ratings. Search and filter run on that text.
             A million dashboards is still cheap. A million binaries is not.
           </p>
         </li>

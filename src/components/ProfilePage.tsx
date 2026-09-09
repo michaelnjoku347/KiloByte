@@ -77,7 +77,7 @@ function AppearancePanel({
   return (
     <section className="panel appearance-panel">
       <h2>Appearance</h2>
-      <p className="meter-line">Light paper or a night desk. Stays on this browser.</p>
+      <p className="meter-line">Light or dark. Saved on this browser.</p>
       <div className="theme-switch" role="radiogroup" aria-label="Appearance">
         <button
           type="button"
@@ -116,7 +116,7 @@ function GuestSplit({
           type a name under Make.
         </p>
         <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
-          Back to the floor
+          Back to Play
         </button>
       </section>
       <SignUpForm onSignUp={onSignUp} />

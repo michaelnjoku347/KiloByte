@@ -73,22 +73,22 @@ export function DiscoverPage({
         <ol>
           <li>
             <strong>1</strong>
-            <span>Pick a game from the shelf.</span>
+            <span>Browse a game.</span>
           </li>
           <li>
             <strong>2</strong>
-            <span>Press Play. It runs in this tab.</span>
+            <span>Play it in this tab.</span>
           </li>
           <li>
             <strong>3</strong>
-            <span>Or open Make and publish yours.</span>
+            <span>Publish yours from Make.</span>
           </li>
         </ol>
       </section>
 
       {featured && (
         <section className="lead">
-          <p className="eyebrow">Start here</p>
+          <p className="eyebrow">Featured</p>
           <div className="lead-spread">
             <button
               type="button"
@@ -115,7 +115,7 @@ export function DiscoverPage({
                   Play this
                 </button>
                 <button type="button" className="ghost-btn" onClick={() => go({ name: 'game', id: featured.id })}>
-                  Read the card
+                  Details
                 </button>
               </div>
             </div>
@@ -124,7 +124,7 @@ export function DiscoverPage({
       )}
 
       <nav className="kind-index" aria-label="Kinds of games">
-        <p className="kind-label">Jump by kind</p>
+        <p className="kind-label">Browse</p>
         <div className="kind-links">
           {CHART_GENRES.map((genre) => (
             <button key={genre} type="button" className="kind-link" onClick={() => go({ name: 'charts', genre })}>

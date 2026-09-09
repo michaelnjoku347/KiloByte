@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#efe4cf" />
+    <meta name="theme-color" content="#f4f5f8" />
     <meta
       name="description"
-      content="Kilobyte — a paper catalog of browser games. Pick one, press Play, or publish yours. Files stay on GitHub or your machine."
+      content="Kilobyte — play browser games, or publish yours. Files stay on GitHub or your machine."
     />
     <script>
       try {
@@ -16,7 +16,7 @@
           const parsed = JSON.parse(raw)
           if (parsed && parsed.settings && parsed.settings.theme === 'dark') {
             document.documentElement.dataset.theme = 'dark'
-            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#1c1814')
+            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#09090b')
           }
         }
       } catch (e) {}
@@ -24,10 +24,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,650;1,9..144,650&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <title>Kilobyte — a catalog of browser games</title>
+    <title>Kilobyte — browser games</title>
   </head>
   <body>
     <div id="root"></div>

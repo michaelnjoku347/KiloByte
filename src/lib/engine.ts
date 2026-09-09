@@ -737,7 +737,7 @@ export class GameRuntime {
       ctx.fillStyle = 'rgba(8,6,4,0.55)'
       ctx.fillRect(0, 0, VIEW_W, VIEW_H)
       ctx.fillStyle = spec.palette.paper
-      ctx.font = '700 42px Fraunces, serif'
+      ctx.font = '800 42px Syne, Outfit, sans-serif'
       ctx.textAlign = 'center'
       const label =
         this.mode === 'title' ? spec.title : this.mode === 'win' ? 'CLEARED' : 'TILT'
