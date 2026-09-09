@@ -102,6 +102,7 @@ export type GameRecord = {
   palette: Pick<Palette, 'bg' | 'paper' | 'accent'>
   house?: boolean
   bytes: number
+  rating?: number
   visits?: number
   source: GameSource
 }
@@ -131,6 +132,7 @@ export type ArcadeState = {
   plays: Record<string, number>
   recents: string[]
   favorites: string[]
+  ratings: Record<string, number>
   profile: UserProfile | null
   signedIn: boolean
 }
@@ -150,4 +152,4 @@ export type Route =
 
 export type SourceFilter = 'all' | 'house' | 'mine' | 'github' | 'upload' | 'cart'
 
-export type BrowseSort = 'new' | 'title' | 'played' | 'genre'
+export type BrowseSort = 'new' | 'title' | 'rating' | 'genre'

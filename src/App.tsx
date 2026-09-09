@@ -182,7 +182,7 @@ function App() {
           <DiscoverPage
             all={catalog.all}
             mineIds={catalog.mineIds}
-            plays={catalog.plays}
+            ratings={catalog.ratings}
             recents={catalog.recents}
             favorites={catalog.favorites}
             onPlay={play}
@@ -192,7 +192,7 @@ function App() {
           <DiscoverPage
             all={catalog.all}
             mineIds={catalog.mineIds}
-            plays={catalog.plays}
+            ratings={catalog.ratings}
             recents={catalog.recents}
             favorites={catalog.favorites}
             searchQuery={route.query}
@@ -200,7 +200,7 @@ function App() {
           />
         )}
         {route.name === 'charts' && (
-          <ChartsPage all={catalog.all} plays={catalog.plays} genre={route.genre} onPlay={play} />
+          <ChartsPage all={catalog.all} ratings={catalog.ratings} genre={route.genre} onPlay={play} />
         )}
         {route.name === 'create' && (
           <CreatePage
@@ -221,7 +221,7 @@ function App() {
             theme={catalog.settings.theme}
             mine={catalog.mine}
             saved={catalog.all.filter((g) => catalog.favorites.includes(g.id))}
-            plays={catalog.plays}
+            ratings={catalog.ratings}
             onPlay={play}
             onSignUp={catalog.signUp}
             onSignIn={catalog.signIn}
@@ -236,6 +236,7 @@ function App() {
             game={current}
             all={catalog.all}
             plays={catalog.plays[current.id] ?? 0}
+            ratings={catalog.ratings}
             mine={catalog.mineIds.has(current.id)}
             favorited={catalog.favorites.includes(current.id)}
             onRemove={() => {
@@ -244,6 +245,7 @@ function App() {
             }}
             onPlay={() => play(current.id)}
             onFavorite={() => catalog.toggleFavorite(current.id)}
+            onRate={(stars) => catalog.rate(current.id, stars)}
             onPlayOther={play}
           />
         )}

@@ -14,19 +14,26 @@ export const CHART_GENRES = [
   'Arcade',
 ] as const
 
-export function visitScore(game: GameRecord, plays: Record<string, number>): number {
-  return (game.visits ?? 0) + (plays[game.id] ?? 0)
+export function clampRating(n: number): number {
+  if (!Number.isFinite(n)) return 0
+  return Math.round(Math.min(5, Math.max(0, n)) * 10) / 10
 }
 
-export function formatCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
-  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1).replace(/\.0$/, '')}K`
-  return String(Math.round(n))
+export function shownRating(game: GameRecord, ratings: Record<string, number> = {}): number {
+  const vote = ratings[game.id]
+  if (typeof vote === 'number' && Number.isFinite(vote)) return clampRating(vote)
+  return clampRating(game.rating ?? 0)
 }
 
-export function rankGames(games: GameRecord[], plays: Record<string, number>): GameRecord[] {
+export function formatRating(n: number): string {
+  const value = clampRating(n)
+  if (value <= 0) return '—'
+  return value.toFixed(1)
+}
+
+export function rankGames(games: GameRecord[], ratings: Record<string, number> = {}): GameRecord[] {
   return [...games].sort((a, b) => {
-    const diff = visitScore(b, plays) - visitScore(a, plays)
+    const diff = shownRating(b, ratings) - shownRating(a, ratings)
     return diff || b.createdAt.localeCompare(a.createdAt)
   })
 }
@@ -39,7 +46,7 @@ export type Rail = {
 
 export function buildRails(
   games: GameRecord[],
-  plays: Record<string, number>,
+  ratings: Record<string, number>,
   recents: string[],
   mineIds: Set<string>,
   favorites: string[] = [],
@@ -50,7 +57,7 @@ export function buildRails(
   if (continued.length) rails.push({ id: 'continue', title: 'You were here', games: continued })
   const liked = favorites.map((id) => byId.get(id)).filter((g): g is GameRecord => Boolean(g))
   if (liked.length) rails.push({ id: 'favorites', title: 'Saved', games: liked })
-  const recommended = rankGames(games, plays).slice(0, 12)
+  const recommended = rankGames(games, ratings).slice(0, 12)
   if (recommended.length) {
     rails.push({ id: 'recommended', title: 'Worth a look', games: recommended })
   }
@@ -61,7 +68,7 @@ export function buildRails(
   for (const genre of CHART_GENRES) {
     const list = games.filter((g) => g.genres.some((x) => x.toLowerCase() === genre.toLowerCase()))
     if (list.length) {
-      rails.push({ id: `genre-${genre}`, title: genre, games: rankGames(list, plays) })
+      rails.push({ id: `genre-${genre}`, title: genre, games: rankGames(list, ratings) })
     }
   }
   return rails
@@ -69,9 +76,9 @@ export function buildRails(
 
 export function featuredGame(
   games: GameRecord[],
-  plays: Record<string, number>,
+  ratings: Record<string, number> = {},
 ): GameRecord | undefined {
-  return rankGames(games, plays)[0]
+  return rankGames(games, ratings)[0]
 }
 
 export type BrowseQuery = {
@@ -85,7 +92,7 @@ export function filterGames(
   games: GameRecord[],
   q: BrowseQuery,
   mineIds: Set<string>,
-  plays: Record<string, number>,
+  ratings: Record<string, number> = {},
 ): GameRecord[] {
   const text = q.query.trim().toLowerCase()
   const wanted = q.genres.map((g) => g.toLowerCase())
@@ -109,7 +116,7 @@ export function filterGames(
   sorted.sort((a, b) => {
     if (q.sort === 'title') return a.title.localeCompare(b.title)
     if (q.sort === 'genre') return (a.genres[0] ?? '').localeCompare(b.genres[0] ?? '')
-    if (q.sort === 'played') return visitScore(b, plays) - visitScore(a, plays)
+    if (q.sort === 'rating') return shownRating(b, ratings) - shownRating(a, ratings)
     return b.createdAt.localeCompare(a.createdAt)
   })
   return sorted

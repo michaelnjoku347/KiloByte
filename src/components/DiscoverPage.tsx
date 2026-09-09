@@ -1,14 +1,15 @@
 import { useMemo } from 'react'
 import type { GameRecord } from '../types'
-import { CHART_GENRES, buildRails, featuredGame, filterGames, formatCount, visitScore } from '../lib/catalog'
+import { CHART_GENRES, buildRails, featuredGame, filterGames, shownRating } from '../lib/catalog'
 import { go } from '../lib/route'
 import { livePointer } from '../lib/pointer'
 import { GameCard } from './GameCard'
+import { StarRating } from './StarRating'
 
 export function DiscoverPage({
   all,
   mineIds,
-  plays,
+  ratings,
   recents,
   favorites,
   searchQuery,
@@ -16,26 +17,26 @@ export function DiscoverPage({
 }: {
   all: GameRecord[]
   mineIds: Set<string>
-  plays: Record<string, number>
+  ratings: Record<string, number>
   recents: string[]
   favorites: string[]
   searchQuery?: string
   onPlay: (id: string) => void
 }) {
-  const featured = featuredGame(all, plays)
+  const featured = featuredGame(all, ratings)
   const shelves = useMemo(
     () =>
-      buildRails(all, plays, recents, mineIds, favorites).filter(
+      buildRails(all, ratings, recents, mineIds, favorites).filter(
         (shelf) => !shelf.id.startsWith('genre-'),
       ),
-    [all, plays, recents, mineIds, favorites],
+    [all, ratings, recents, mineIds, favorites],
   )
   const results = useMemo(
     () =>
       searchQuery
-        ? filterGames(all, { query: searchQuery, genres: [], source: 'all', sort: 'played' }, mineIds, plays)
+        ? filterGames(all, { query: searchQuery, genres: [], source: 'all', sort: 'rating' }, mineIds, ratings)
         : [],
-    [all, searchQuery, mineIds, plays],
+    [all, searchQuery, mineIds, ratings],
   )
 
   if (searchQuery !== undefined) {
@@ -55,7 +56,7 @@ export function DiscoverPage({
               <GameCard
                 key={game.id}
                 game={game}
-                plays={plays[game.id] ?? 0}
+                rating={shownRating(game, ratings)}
                 stagger={i}
                 onPlay={() => onPlay(game.id)}
               />
@@ -104,9 +105,10 @@ export function DiscoverPage({
             <div className="lead-body">
               <h1>{featured.title}</h1>
               <p className="lede">{featured.blurb}</p>
-              <p className="meter-line">
-                {featured.genres.join(' · ')} · {formatCount(visitScore(featured, plays))} plays ·{' '}
-                {featured.author}
+              <p className="meter-line lead-rating">
+                <span>{featured.genres.join(' · ')}</span>
+                <StarRating value={shownRating(featured, ratings)} size="md" />
+                <span>{featured.author}</span>
               </p>
               <div className="hero-actions">
                 <button type="button" className="play-btn" onClick={() => onPlay(featured.id)}>
@@ -147,7 +149,7 @@ export function DiscoverPage({
               <GameCard
                 key={game.id}
                 game={game}
-                plays={plays[game.id] ?? 0}
+                rating={shownRating(game, ratings)}
                 compact
                 stagger={i}
                 onPlay={() => onPlay(game.id)}

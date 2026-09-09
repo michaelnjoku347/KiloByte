@@ -177,6 +177,7 @@ function UploadForm({
           cover: '#e85d3a',
           palette: { bg: '#221910', paper: '#f3ead7', accent: '#e85d3a' },
           bytes: bundleBytes(files),
+          rating: 0,
           source: { kind: 'upload', entry },
         },
         files,
@@ -330,6 +331,7 @@ function GithubForm({
       cover: '#c6f26d',
       palette: { bg: '#101014', paper: '#f4f1ea', accent: '#c6f26d' },
       bytes: 0,
+      rating: 0,
       source: {
         kind: 'github',
         owner: inspect.ref.owner,

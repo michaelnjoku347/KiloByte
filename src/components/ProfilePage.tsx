@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { GameRecord, SiteTheme, UserProfile } from '../types'
+import { shownRating } from '../lib/catalog'
 import { GameCard } from './GameCard'
 import { go } from '../lib/route'
 import { hasPassphrase, initialsFrom } from '../lib/profile'
@@ -10,7 +11,7 @@ export function ProfilePage({
   theme,
   mine,
   saved,
-  plays,
+  ratings,
   onPlay,
   onSignUp,
   onSignIn,
@@ -24,7 +25,7 @@ export function ProfilePage({
   theme: SiteTheme
   mine: GameRecord[]
   saved: GameRecord[]
-  plays: Record<string, number>
+  ratings: Record<string, number>
   onPlay: (id: string) => void
   onSignUp: (input: { displayName: string; handle: string; bio?: string; passphrase?: string }) => Promise<void>
   onSignIn: (passphrase?: string) => Promise<void>
@@ -51,7 +52,7 @@ export function ProfilePage({
           profile={profile}
           mine={mine}
           saved={saved}
-          plays={plays}
+          ratings={ratings}
           onPlay={onPlay}
           onSignOut={onSignOut}
           onUpdate={onUpdate}
@@ -233,7 +234,7 @@ function SignedInCard({
   profile,
   mine,
   saved,
-  plays,
+  ratings,
   onPlay,
   onSignOut,
   onUpdate,
@@ -242,7 +243,7 @@ function SignedInCard({
   profile: UserProfile
   mine: GameRecord[]
   saved: GameRecord[]
-  plays: Record<string, number>
+  ratings: Record<string, number>
   onPlay: (id: string) => void
   onSignOut: () => void
   onUpdate: (patch: { displayName?: string; bio?: string; passphrase?: string }) => Promise<void>
@@ -291,7 +292,13 @@ function SignedInCard({
           </header>
           <div className="shelf-grid">
             {mine.map((game) => (
-              <GameCard key={game.id} game={game} plays={plays[game.id] ?? 0} compact onPlay={() => onPlay(game.id)} />
+              <GameCard
+                key={game.id}
+                game={game}
+                rating={shownRating(game, ratings)}
+                compact
+                onPlay={() => onPlay(game.id)}
+              />
             ))}
           </div>
         </section>
@@ -304,7 +311,13 @@ function SignedInCard({
           </header>
           <div className="shelf-grid">
             {saved.map((game) => (
-              <GameCard key={game.id} game={game} plays={plays[game.id] ?? 0} compact onPlay={() => onPlay(game.id)} />
+              <GameCard
+                key={game.id}
+                game={game}
+                rating={shownRating(game, ratings)}
+                compact
+                onPlay={() => onPlay(game.id)}
+              />
             ))}
           </div>
         </section>

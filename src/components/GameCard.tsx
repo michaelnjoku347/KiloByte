@@ -1,27 +1,25 @@
 import type { CSSProperties } from 'react'
 import type { GameRecord } from '../types'
-import { formatCount, visitScore } from '../lib/catalog'
 import { go } from '../lib/route'
 import { livePointer } from '../lib/pointer'
+import { StarRating } from './StarRating'
 
 export function GameCard({
   game,
-  plays = 0,
+  rating = 0,
   compact = false,
   rank,
   stagger = 0,
   onPlay,
 }: {
   game: GameRecord
-  plays?: number
+  rating?: number
   compact?: boolean
   rank?: number
   stagger?: number
   onPlay?: () => void
   onRemove?: () => void
 }) {
-  const visits = visitScore(game, { [game.id]: plays })
-
   return (
     <article className={`plate ${compact ? 'compact' : ''}`} style={{ '--stagger': stagger } as CSSProperties}>
       <button type="button" className="plate-hit" onClick={() => go({ name: 'game', id: game.id })}>
@@ -38,9 +36,10 @@ export function GameCard({
         </span>
         <span className="plate-copy">
           <strong>{game.title}</strong>
-          <small>
-            {formatCount(visits)} plays · {game.author}
-          </small>
+          <span className="plate-meta">
+            <StarRating value={rating} />
+            <span className="plate-author">{game.author}</span>
+          </span>
         </span>
       </button>
       {onPlay && (

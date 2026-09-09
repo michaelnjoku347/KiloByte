@@ -3,7 +3,7 @@ import { zipSync, strToU8 } from 'fflate'
 import { parseGithubInput, jsdelivrUrl } from './github'
 import { filesFromZip, findEntry } from './bundle'
 import { normalizeGenre, parseGenreList, toggleGenre } from './genres'
-import { buildRails, featuredGame, filterGames, formatCount } from './catalog'
+import { buildRails, featuredGame, filterGames, clampRating, formatRating, shownRating } from './catalog'
 import { parseHash, toHash } from './route'
 import { emptyState, houseLibrary, upsertGame } from './storage'
 import { recordFromCart } from './record'
@@ -111,26 +111,29 @@ describe('routes', () => {
 })
 
 describe('catalog shelves', () => {
-  it('formats play counts and builds You were here / Worth a look / kind shelves', () => {
-    expect(formatCount(22100)).toBe('22K')
-    expect(formatCount(980)).toBe('980')
+  it('ranks by star rating and builds You were here / Worth a look / kind shelves', () => {
+    expect(formatRating(4.9)).toBe('4.9')
+    expect(formatRating(0)).toBe('—')
+    expect(clampRating(6)).toBe(5)
     const games = [
       fakeGame({
         id: 'a',
         title: 'Harbor',
         genres: ['Simulator'],
-        visits: 50,
+        rating: 3.2,
         createdAt: '2026-01-02T00:00:00.000Z',
       }),
       fakeGame({
         id: 'b',
         title: 'Ash',
         genres: ['Puzzle'],
-        visits: 10,
+        rating: 4.1,
         createdAt: '2026-01-03T00:00:00.000Z',
       }),
     ]
-    expect(featuredGame(games, { b: 100 })?.id).toBe('b')
+    expect(featuredGame(games)?.id).toBe('b')
+    expect(featuredGame(games, { a: 5 })?.id).toBe('a')
+    expect(shownRating(games[0], { a: 4 })).toBe(4)
     const rails = buildRails(games, {}, ['b'], new Set(['a']), ['a'])
     expect(rails.map((r) => r.id)).toEqual([
       'continue',
@@ -154,6 +157,8 @@ describe('cabinet storage', () => {
     expect(lib.some((g) => g.genres.includes('Shooter'))).toBe(true)
     expect(lib.some((g) => g.genres.includes('Puzzle'))).toBe(true)
     expect(lib.some((g) => g.source.kind === 'github')).toBe(true)
+    expect(featuredGame(lib)?.id).toBe('house_dock_ledger')
+    expect(lib.find((g) => g.id === 'house_2048')?.rating).toBe(4.8)
     const spec = compileCart({
       prompt: 'ocean collector',
       author: 'A',
