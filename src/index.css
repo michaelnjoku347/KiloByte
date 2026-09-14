@@ -17,6 +17,7 @@
   --play-face: #ffffff;
   --stamp-edge: #4f46e5;
   --on-plate: #ffffff;
+  --on-ink: #ffffff;
   --code-bg: #0c0e12;
   --code-ink: #e4e4e7;
   --chip: rgba(12, 14, 18, 0.05);
@@ -54,6 +55,7 @@ html[data-theme='dark'] {
   --play-face: #ffffff;
   --stamp-edge: #6d5efc;
   --on-plate: #ffffff;
+  --on-ink: #09090b;
   --code-bg: #050506;
   --code-ink: #e4e4e7;
   --chip: rgba(255, 255, 255, 0.06);

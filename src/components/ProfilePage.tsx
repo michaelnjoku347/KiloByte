@@ -59,7 +59,7 @@ export function ProfilePage({
           onRemove={onRemove}
         />
       ) : profile ? (
-        <SignInCard profile={profile} onSignIn={onSignIn} />
+        <SignInCard profile={profile} onSignIn={onSignIn} onRemove={onRemove} />
       ) : (
         <GuestSplit onSignUp={onSignUp} />
       )}
@@ -184,9 +184,11 @@ function SignUpForm({
 function SignInCard({
   profile,
   onSignIn,
+  onRemove,
 }: {
   profile: UserProfile
   onSignIn: (passphrase?: string) => Promise<void>
+  onRemove: () => void
 }) {
   const [passphrase, setPassphrase] = useState('')
   const [error, setError] = useState('')
@@ -225,7 +227,13 @@ function SignInCard({
         <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
           Stay a guest
         </button>
+        <button type="button" className="ghost-btn" onClick={onRemove}>
+          Remove this card
+        </button>
       </div>
+      {locked && (
+        <p className="meter-line">Forgot the passphrase? Remove the card from this browser to start over.</p>
+      )}
     </section>
   )
 }

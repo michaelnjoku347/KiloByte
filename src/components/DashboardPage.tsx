@@ -118,7 +118,7 @@ export function DashboardPage({
       {related.length > 0 && (
         <section className="shelf">
           <header className="shelf-head">
-            <h2>Nearby on the shelf</h2>
+            <h2>More like this</h2>
           </header>
           <div className="shelf-grid">
             {related.map((item, i) => (

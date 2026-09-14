@@ -57,6 +57,8 @@
   padding: 4px;
   background: var(--chip);
   border-radius: 999px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .nav button,
@@ -287,12 +289,12 @@ h2 {
 }
 
 .howto {
-  margin: 0 0 28px;
-  padding: 6px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  margin: 0 0 22px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .howto ol {
@@ -447,7 +449,7 @@ h2 {
 .kind-on,
 .chip-on {
   background: var(--ink);
-  color: var(--bg);
+  color: var(--on-ink);
 }
 
 .shelf {
@@ -882,7 +884,7 @@ h2 {
 
 .prompt-row .chip-on {
   background: var(--ink);
-  color: var(--bg);
+  color: var(--on-ink);
 }
 
 .check {
@@ -1054,7 +1056,7 @@ h2 {
   left: 50%;
   transform: translateX(-50%);
   background: var(--ink);
-  color: var(--bg);
+  color: var(--on-ink);
   padding: 12px 18px;
   border-radius: 999px;
   box-shadow: var(--shadow);
@@ -1279,7 +1281,7 @@ h2 {
 }
 
 .howto li:hover {
-  background: var(--bg);
+  background: var(--chip);
 }
 
 .kind-link,
@@ -1292,7 +1294,7 @@ h2 {
 }
 
 .prompt-row .chip-on:hover {
-  color: var(--bg);
+  color: var(--on-ink);
 }
 
 .lead-poster,
