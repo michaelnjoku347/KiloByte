@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ArcadeSettings, GameRecord, GameSpec, SiteTheme, UserProfile } from '../types'
 import {
   DEFAULT_SETTINGS,
@@ -29,26 +29,31 @@ export function useCatalog() {
   const [plays, setPlays] = useState<Record<string, number>>(() => initial.plays)
   const [recents, setRecents] = useState<string[]>(() => initial.recents)
   const [favorites, setFavorites] = useState<string[]>(() => initial.favorites)
+  const [ratings, setRatings] = useState<Record<string, number>>(() => initial.ratings)
   const [profile, setProfile] = useState<UserProfile | null>(() => initial.profile)
   const [signedIn, setSignedIn] = useState(() => initial.signedIn)
   const [toast, setToast] = useState('')
+  const toastTimer = useRef(0)
 
   useEffect(() => {
-    saveState({ games, settings, plays, recents, favorites, profile, signedIn })
-  }, [games, settings, plays, recents, favorites, profile, signedIn])
+    saveState({ games, settings, plays, recents, favorites, ratings, profile, signedIn })
+  }, [games, settings, plays, recents, favorites, ratings, profile, signedIn])
 
   useEffect(() => {
     applyTheme(parseTheme(settings.theme))
   }, [settings.theme])
 
+  useEffect(() => () => window.clearTimeout(toastTimer.current), [])
+
   const flash = (message: string) => {
     setToast(message)
-    window.setTimeout(() => setToast(''), 2600)
+    window.clearTimeout(toastTimer.current)
+    toastTimer.current = window.setTimeout(() => setToast(''), 2600)
   }
 
   const all = useMemo(
-    () => publishedGames({ games, settings, plays, recents, favorites, profile, signedIn }),
-    [games, settings, plays, recents, favorites, profile, signedIn],
+    () => publishedGames({ games, settings, plays, recents, favorites, ratings, profile, signedIn }),
+    [games, settings, plays, recents, favorites, ratings, profile, signedIn],
   )
   const mineIds = useMemo(() => new Set(games.map((g) => g.id)), [games])
 
@@ -68,6 +73,12 @@ export function useCatalog() {
     setGames((list) => list.filter((g) => g.id !== id))
     setRecents((list) => list.filter((x) => x !== id))
     setFavorites((list) => list.filter((x) => x !== id))
+    setRatings((prev) => {
+      if (!(id in prev)) return prev
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
     await deleteBundle(id).catch(() => undefined)
     flash('Removed from the catalog')
   }
@@ -79,6 +90,13 @@ export function useCatalog() {
 
   const toggleFavorite = (id: string) => {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  const rate = (id: string, stars: number) => {
+    const n = Math.round(stars)
+    if (n < 1 || n > 5) return
+    setRatings((prev) => ({ ...prev, [id]: n }))
+    setGames((list) => list.map((game) => (game.id === id ? { ...game, rating: n } : game)))
   }
 
   const find = (id: string) => all.find((g) => g.id === id)
@@ -151,6 +169,7 @@ export function useCatalog() {
     plays,
     recents,
     favorites,
+    ratings,
     profile,
     signedIn,
     toast,
@@ -160,6 +179,7 @@ export function useCatalog() {
     remove,
     bumpPlays,
     toggleFavorite,
+    rate,
     find,
     signUp,
     signIn,

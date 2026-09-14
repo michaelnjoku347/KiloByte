@@ -53,7 +53,7 @@ export function PlayView({
     <div className="page play-page">
       <div className="play-head">
         <button type="button" className="ghost-btn" onClick={() => go({ name: 'game', id: game.id })}>
-          ← The card
+          ← Back
         </button>
         <div>
           <p className="eyebrow">

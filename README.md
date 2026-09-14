@@ -1,6 +1,6 @@
 # Kilobyte
 
-A paper catalog of browser games: people **pick a title**, **press Play**, and **publish** by uploading a build or connecting a GitHub repo. You do not store Unity/WebGL binaries.
+A catalog of browser games: people **pick a title**, **press Play**, and **publish** by uploading a build or connecting a GitHub repo. You do not store Unity/WebGL binaries.
 
 ## Launch it
 
@@ -26,8 +26,8 @@ GitHub is the production path for “literally any game”: a Phaser project, a 
 
 ## Product
 
-- **Play**: numbered how-to, today’s pick, wrapping shelf of portrait cards
-- **Catalog**: a ranked table of every game, filterable by kind
+- **Play**: featured game, star ratings, wrapping grid of covers
+- **Catalog**: a table of every game, ranked by star rating and filterable by kind
 - Find a title from the masthead; each card has Play, Save, and “what this is”
 - **You**: optional on-device card (no account server) and Light/Dark appearance
 - Player: iframe for HTML/GitHub, built-in engine for carts

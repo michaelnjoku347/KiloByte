@@ -11,7 +11,7 @@ function htmlGame(
   cover: string,
   palette: GameRecord['palette'],
   createdAt: string,
-  visits = 0,
+  rating = 0,
 ): GameRecord {
   return {
     id,
@@ -25,7 +25,7 @@ function htmlGame(
     palette,
     house: true,
     bytes: 18_000,
-    visits,
+    rating,
     source: { kind: 'html', entry: 'index.html', href: `/games/${folder}/index.html` },
   }
 }
@@ -42,7 +42,7 @@ export const HOUSE_GAMES: GameRecord[] = [
     '#2ec4b6',
     { bg: '#062a32', paper: '#d8f3f0', accent: '#2ec4b6' },
     '2026-02-02T00:00:00.000Z',
-    12400,
+    4.9,
   ),
   htmlGame(
     'house_ash_fold',
@@ -55,7 +55,7 @@ export const HOUSE_GAMES: GameRecord[] = [
     '#c45c26',
     { bg: '#1b1410', paper: '#f0e4d0', accent: '#c45c26' },
     '2026-02-04T00:00:00.000Z',
-    6100,
+    4.3,
   ),
   htmlGame(
     'house_void_line',
@@ -68,7 +68,7 @@ export const HOUSE_GAMES: GameRecord[] = [
     '#ff5d73',
     { bg: '#0b1020', paper: '#d7e0ff', accent: '#7cf0ff' },
     '2026-02-06T00:00:00.000Z',
-    9800,
+    4.6,
   ),
   htmlGame(
     'house_night_clerk',
@@ -81,7 +81,7 @@ export const HOUSE_GAMES: GameRecord[] = [
     '#9b2226',
     { bg: '#12080c', paper: '#f0e4d0', accent: '#e85d3a' },
     '2026-02-08T00:00:00.000Z',
-    5400,
+    4.1,
   ),
   htmlGame(
     'house_metro_seed',
@@ -94,7 +94,7 @@ export const HOUSE_GAMES: GameRecord[] = [
     '#f6d37a',
     { bg: '#17140f', paper: '#f3ead7', accent: '#f6d37a' },
     '2026-02-10T00:00:00.000Z',
-    8800,
+    4.5,
   ),
   htmlGame(
     'house_wire_beat',
@@ -107,7 +107,7 @@ export const HOUSE_GAMES: GameRecord[] = [
     '#c6f26d',
     { bg: '#101014', paper: '#f4f1ea', accent: '#c6f26d' },
     '2026-02-12T00:00:00.000Z',
-    4200,
+    4.0,
   ),
   htmlGame(
     'house_hex_claim',
@@ -120,7 +120,7 @@ export const HOUSE_GAMES: GameRecord[] = [
     '#74a12e',
     { bg: '#122116', paper: '#e7f0d8', accent: '#74a12e' },
     '2026-02-14T00:00:00.000Z',
-    3900,
+    3.8,
   ),
   htmlGame(
     'house_lane_heat',
@@ -133,7 +133,7 @@ export const HOUSE_GAMES: GameRecord[] = [
     '#e85d3a',
     { bg: '#1a120c', paper: '#f3ead7', accent: '#e85d3a' },
     '2026-02-16T00:00:00.000Z',
-    7100,
+    4.4,
   ),
   {
     id: 'house_2048',
@@ -148,7 +148,7 @@ export const HOUSE_GAMES: GameRecord[] = [
     palette: { bg: '#faf8ef', paper: '#776e65', accent: '#edc22e' },
     house: true,
     bytes: 0,
-    visits: 22100,
+    rating: 4.8,
     source: {
       kind: 'github',
       owner: 'gabrielecirulli',

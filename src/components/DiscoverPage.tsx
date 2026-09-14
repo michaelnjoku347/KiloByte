@@ -1,13 +1,15 @@
 import { useMemo } from 'react'
 import type { GameRecord } from '../types'
-import { CHART_GENRES, buildRails, featuredGame, filterGames, formatCount, visitScore } from '../lib/catalog'
+import { CHART_GENRES, buildRails, featuredGame, filterGames, shownRating } from '../lib/catalog'
 import { go } from '../lib/route'
+import { livePointer } from '../lib/pointer'
 import { GameCard } from './GameCard'
+import { StarRating } from './StarRating'
 
 export function DiscoverPage({
   all,
   mineIds,
-  plays,
+  ratings,
   recents,
   favorites,
   searchQuery,
@@ -15,26 +17,26 @@ export function DiscoverPage({
 }: {
   all: GameRecord[]
   mineIds: Set<string>
-  plays: Record<string, number>
+  ratings: Record<string, number>
   recents: string[]
   favorites: string[]
   searchQuery?: string
   onPlay: (id: string) => void
 }) {
-  const featured = featuredGame(all, plays)
+  const featured = featuredGame(all, ratings)
   const shelves = useMemo(
     () =>
-      buildRails(all, plays, recents, mineIds, favorites).filter(
+      buildRails(all, ratings, recents, mineIds, favorites).filter(
         (shelf) => !shelf.id.startsWith('genre-'),
       ),
-    [all, plays, recents, mineIds, favorites],
+    [all, ratings, recents, mineIds, favorites],
   )
   const results = useMemo(
     () =>
       searchQuery
-        ? filterGames(all, { query: searchQuery, genres: [], source: 'all', sort: 'played' }, mineIds, plays)
+        ? filterGames(all, { query: searchQuery, genres: [], source: 'all', sort: 'rating' }, mineIds, ratings)
         : [],
-    [all, searchQuery, mineIds, plays],
+    [all, searchQuery, mineIds, ratings],
   )
 
   if (searchQuery !== undefined) {
@@ -50,11 +52,12 @@ export function DiscoverPage({
           <p className="empty">Nothing by that name. Try Puzzle, Simulator, or a title like Dock Ledger.</p>
         ) : (
           <div className="shelf-grid">
-            {results.map((game) => (
+            {results.map((game, i) => (
               <GameCard
                 key={game.id}
                 game={game}
-                plays={plays[game.id] ?? 0}
+                rating={shownRating(game, ratings)}
+                stagger={i}
                 onPlay={() => onPlay(game.id)}
               />
             ))}
@@ -70,30 +73,31 @@ export function DiscoverPage({
         <ol>
           <li>
             <strong>1</strong>
-            <span>Pick a game from the shelf.</span>
+            <span>Browse a game.</span>
           </li>
           <li>
             <strong>2</strong>
-            <span>Press Play. It runs in this tab.</span>
+            <span>Play it in this tab.</span>
           </li>
           <li>
             <strong>3</strong>
-            <span>Or open Make and publish yours.</span>
+            <span>Publish yours from Make.</span>
           </li>
         </ol>
       </section>
 
       {featured && (
         <section className="lead">
-          <p className="eyebrow">Start here</p>
+          <p className="eyebrow">Featured</p>
           <div className="lead-spread">
             <button
               type="button"
-              className="lead-poster"
+              className="lead-poster tilt"
               style={{
                 background: `linear-gradient(168deg, ${featured.palette.bg} 10%, ${featured.cover} 80%)`,
               }}
               onClick={() => go({ name: 'game', id: featured.id })}
+              {...livePointer}
             >
               <i>{featured.genres[0]}</i>
               <span>{featured.title}</span>
@@ -101,16 +105,17 @@ export function DiscoverPage({
             <div className="lead-body">
               <h1>{featured.title}</h1>
               <p className="lede">{featured.blurb}</p>
-              <p className="meter-line">
-                {featured.genres.join(' · ')} · {formatCount(visitScore(featured, plays))} plays ·{' '}
-                {featured.author}
+              <p className="meter-line lead-rating">
+                <span>{featured.genres.join(' · ')}</span>
+                <StarRating value={shownRating(featured, ratings)} size="md" />
+                <span>{featured.author}</span>
               </p>
               <div className="hero-actions">
                 <button type="button" className="play-btn" onClick={() => onPlay(featured.id)}>
                   Play this
                 </button>
                 <button type="button" className="ghost-btn" onClick={() => go({ name: 'game', id: featured.id })}>
-                  Read the card
+                  Details
                 </button>
               </div>
             </div>
@@ -118,8 +123,8 @@ export function DiscoverPage({
         </section>
       )}
 
-      <nav className="kind-index" aria-label="Kinds of games">
-        <p className="kind-label">Jump by kind</p>
+      <nav className="kind-index" aria-label="Game genres">
+        <p className="kind-label">Browse</p>
         <div className="kind-links">
           {CHART_GENRES.map((genre) => (
             <button key={genre} type="button" className="kind-link" onClick={() => go({ name: 'charts', genre })}>
@@ -140,12 +145,13 @@ export function DiscoverPage({
             )}
           </header>
           <div className="shelf-grid">
-            {shelf.games.map((game) => (
+            {shelf.games.map((game, i) => (
               <GameCard
                 key={game.id}
                 game={game}
-                plays={plays[game.id] ?? 0}
+                rating={shownRating(game, ratings)}
                 compact
+                stagger={i}
                 onPlay={() => onPlay(game.id)}
               />
             ))}
