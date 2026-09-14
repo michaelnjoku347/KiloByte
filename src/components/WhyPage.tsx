@@ -60,7 +60,7 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
         <li>
           <h2>3. Tiny carts still exist</h2>
           <p>
-            Prompt-minted JSON games are for people who want a one-kilobyte recipe. Full
+            Prompted JSON games are for people who want a one-kilobyte recipe. Full
             games should be Upload or GitHub.
           </p>
         </li>
