@@ -123,7 +123,7 @@ export function DiscoverPage({
         </section>
       )}
 
-      <nav className="kind-index" aria-label="Kinds of games">
+      <nav className="kind-index" aria-label="Game genres">
         <p className="kind-label">Browse</p>
         <div className="kind-links">
           {CHART_GENRES.map((genre) => (

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ArcadeSettings, GameRecord, GameSpec, SiteTheme, UserProfile } from '../types'
 import {
   DEFAULT_SETTINGS,
@@ -33,6 +33,7 @@ export function useCatalog() {
   const [profile, setProfile] = useState<UserProfile | null>(() => initial.profile)
   const [signedIn, setSignedIn] = useState(() => initial.signedIn)
   const [toast, setToast] = useState('')
+  const toastTimer = useRef(0)
 
   useEffect(() => {
     saveState({ games, settings, plays, recents, favorites, ratings, profile, signedIn })
@@ -42,9 +43,12 @@ export function useCatalog() {
     applyTheme(parseTheme(settings.theme))
   }, [settings.theme])
 
+  useEffect(() => () => window.clearTimeout(toastTimer.current), [])
+
   const flash = (message: string) => {
     setToast(message)
-    window.setTimeout(() => setToast(''), 2600)
+    window.clearTimeout(toastTimer.current)
+    toastTimer.current = window.setTimeout(() => setToast(''), 2600)
   }
 
   const all = useMemo(

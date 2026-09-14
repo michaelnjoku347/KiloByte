@@ -77,7 +77,7 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
         <h2>How to launch this site</h2>
         <p>
           This is a static Vite app. Build it and put <code>dist/</code> on GitHub Pages
-          or Cloudflare Pages. No API keys required for the public cabinet. Optional
+          or Cloudflare Pages. No API keys required for the public catalog. Optional
           Gemini and GitHub tokens are typed by the visitor and stored locally.
         </p>
         <div className="hero-actions">

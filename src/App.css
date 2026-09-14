@@ -5,6 +5,23 @@
   flex-direction: column;
 }
 
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -48px;
+  z-index: 20;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -112,6 +129,27 @@
   outline: none;
 }
 
+.search-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.search-clear {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-right: -6px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--chip);
+  color: var(--ink);
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 0;
+}
+
 .search input,
 .field input,
 .field textarea,
@@ -178,9 +216,18 @@ main {
   padding: 28px 28px 64px;
 }
 
+main:focus {
+  outline: none;
+}
+
 .page {
   max-width: 1180px;
   margin: 0 auto;
+}
+
+.floor-page {
+  display: flex;
+  flex-direction: column;
 }
 
 .hero {
@@ -1070,6 +1117,8 @@ h2 {
 .create-tabs {
   margin-bottom: 18px;
   width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
 }
 
 .dropzone {
@@ -1456,13 +1505,40 @@ h2 {
     flex-wrap: wrap;
   }
 
+  .topbar {
+    row-gap: 10px;
+  }
+
   .top-search {
     order: 3;
     max-width: none;
     flex-basis: 100%;
   }
 
-  .howto ol,
+  .floor-page > .lead {
+    order: -1;
+  }
+
+  .howto ol {
+    gap: 4px;
+  }
+
+  .howto li {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 10px 6px;
+    font-size: 0.78rem;
+    line-height: 1.3;
+  }
+
+  .howto strong {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+  }
+
   .studio-grid,
   .play-head,
   .dash-stats,
@@ -1470,6 +1546,21 @@ h2 {
   .you-split,
   .you-card {
     grid-template-columns: 1fr;
+  }
+
+  .nav {
+    overflow-x: auto;
+    max-width: 100%;
+    scrollbar-width: none;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav button {
+    padding: 8px 10px;
+    font-size: 0.88rem;
   }
 
   .lead-spread {
@@ -1524,11 +1615,6 @@ h2 {
     color: var(--muted);
   }
 
-  .nav {
-    overflow-x: auto;
-    max-width: 100%;
-  }
-
   .top-meta .import-btn {
     display: none;
   }
@@ -1538,8 +1624,13 @@ h2 {
   }
 
   .index-kind,
-  .index-blurb {
+  .index-blurb,
+  .index-rating .star-num {
     display: none;
+  }
+
+  .index-table td {
+    padding: 12px 10px;
   }
 
   .pad {

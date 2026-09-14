@@ -4,7 +4,7 @@ import { parseGithubInput, jsdelivrUrl } from './github'
 import { filesFromZip, findEntry } from './bundle'
 import { normalizeGenre, parseGenreList, toggleGenre } from './genres'
 import { buildRails, featuredGame, filterGames, clampRating, formatRating, shownRating } from './catalog'
-import { parseHash, toHash } from './route'
+import { pageTitle, parseHash, toHash } from './route'
 import { emptyState, houseLibrary, upsertGame } from './storage'
 import { recordFromCart } from './record'
 import { compileCart } from './generate'
@@ -107,6 +107,15 @@ describe('routes', () => {
     expect(toHash({ name: 'charts', genre: 'Puzzle' })).toBe('#/charts/Puzzle')
     expect(toHash({ name: 'search', query: 'dock ledger' })).toBe('#/search/dock%20ledger')
     expect(toHash({ name: 'you' })).toBe('#/you')
+  })
+
+  it('titles the tab from the current hash route', () => {
+    expect(pageTitle({ name: 'arcade' })).toBe('Kilobyte — browser games')
+    expect(pageTitle({ name: 'search', query: 'dock' })).toBe('dock · Kilobyte')
+    expect(pageTitle({ name: 'charts', genre: 'Simulator' })).toBe('Simulator · Kilobyte')
+    expect(pageTitle({ name: 'play', id: 'house_dock_ledger' }, 'Dock Ledger')).toBe(
+      'Play Dock Ledger · Kilobyte',
+    )
   })
 })
 

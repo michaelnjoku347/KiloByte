@@ -152,31 +152,38 @@ function SignUpForm({
     <section className="panel">
       <h2>Make a card</h2>
       <p className="meter-line">Optional. Lives on this device only.</p>
-      <label className="field">
-        <span>Name on your games</span>
-        <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Mina" />
-      </label>
-      <label className="field">
-        <span>Handle</span>
-        <input value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="mina" />
-      </label>
-      <label className="field">
-        <span>A line about you (optional)</span>
-        <textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
-      </label>
-      <label className="field">
-        <span>Passphrase (optional)</span>
-        <input
-          type="password"
-          value={passphrase}
-          onChange={(e) => setPassphrase(e.target.value)}
-          placeholder="Only if this browser is shared"
-        />
-      </label>
-      {error && <p className="form-error">{error}</p>}
-      <button type="button" className="play-btn" disabled={busy} onClick={() => void submit()}>
-        {busy ? 'Making…' : 'Make this card'}
-      </button>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          void submit()
+        }}
+      >
+        <label className="field">
+          <span>Name on your games</span>
+          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Mina" />
+        </label>
+        <label className="field">
+          <span>Handle</span>
+          <input value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="mina" />
+        </label>
+        <label className="field">
+          <span>A line about you (optional)</span>
+          <textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
+        </label>
+        <label className="field">
+          <span>Passphrase (optional)</span>
+          <input
+            type="password"
+            value={passphrase}
+            onChange={(e) => setPassphrase(e.target.value)}
+            placeholder="Only if this browser is shared"
+          />
+        </label>
+        {error && <p className="form-error">{error}</p>}
+        <button type="submit" className="play-btn" disabled={busy}>
+          {busy ? 'Making…' : 'Make this card'}
+        </button>
+      </form>
     </section>
   )
 }
@@ -213,24 +220,31 @@ function SignInCard({
       <p className="lede">
         A card for <strong>@{profile.handle}</strong> is already on this browser.
       </p>
-      {locked && (
-        <label className="field">
-          <span>Passphrase</span>
-          <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} />
-        </label>
-      )}
-      {error && <p className="form-error">{error}</p>}
-      <div className="hero-actions">
-        <button type="button" className="play-btn" disabled={busy} onClick={() => void submit()}>
-          Open my card
-        </button>
-        <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
-          Stay a guest
-        </button>
-        <button type="button" className="ghost-btn" onClick={onRemove}>
-          Remove this card
-        </button>
-      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          void submit()
+        }}
+      >
+        {locked && (
+          <label className="field">
+            <span>Passphrase</span>
+            <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} />
+          </label>
+        )}
+        {error && <p className="form-error">{error}</p>}
+        <div className="hero-actions">
+          <button type="submit" className="play-btn" disabled={busy}>
+            Open my card
+          </button>
+          <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
+            Stay a guest
+          </button>
+          <button type="button" className="ghost-btn" onClick={onRemove}>
+            Remove this card
+          </button>
+        </div>
+      </form>
       {locked && (
         <p className="meter-line">Forgot the passphrase? Remove the card from this browser to start over.</p>
       )}
@@ -333,30 +347,37 @@ function SignedInCard({
 
       <section className="panel">
         <h2>Edit the card</h2>
-        <label className="field">
-          <span>Name</span>
-          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-        </label>
-        <label className="field">
-          <span>A line about you</span>
-          <textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
-        </label>
-        <label className="field">
-          <span>New passphrase (optional)</span>
-          <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} />
-        </label>
-        {error && <p className="form-error">{error}</p>}
-        <div className="hero-actions">
-          <button type="button" className="play-btn" disabled={busy} onClick={() => void save()}>
-            Save changes
-          </button>
-          <button type="button" className="ghost-btn" onClick={onSignOut}>
-            Sign out
-          </button>
-          <button type="button" className="ghost-btn" onClick={onRemove}>
-            Remove this card
-          </button>
-        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            void save()
+          }}
+        >
+          <label className="field">
+            <span>Name</span>
+            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+          </label>
+          <label className="field">
+            <span>A line about you</span>
+            <textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
+          </label>
+          <label className="field">
+            <span>New passphrase (optional)</span>
+            <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} />
+          </label>
+          {error && <p className="form-error">{error}</p>}
+          <div className="hero-actions">
+            <button type="submit" className="play-btn" disabled={busy}>
+              Save changes
+            </button>
+            <button type="button" className="ghost-btn" onClick={onSignOut}>
+              Sign out
+            </button>
+            <button type="button" className="ghost-btn" onClick={onRemove}>
+              Remove this card
+            </button>
+          </div>
+        </form>
       </section>
     </>
   )

@@ -49,7 +49,36 @@ export function toHash(route: Route): string {
   }
 }
 
-export function go(route: Route): void {
+export function go(route: Route, opts?: { replace?: boolean }): void {
   const next = toHash(route)
-  if (location.hash !== next) location.hash = next
+  if (location.hash === next) return
+  if (opts?.replace) {
+    history.replaceState(history.state, '', `${location.pathname}${location.search}${next}`)
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+    return
+  }
+  location.hash = next
+}
+
+export function pageTitle(route: Route, gameTitle?: string): string {
+  switch (route.name) {
+    case 'create':
+      return 'Make · Kilobyte'
+    case 'charts':
+      return `${route.genre ?? 'Catalog'} · Kilobyte`
+    case 'search':
+      return route.query ? `${route.query} · Kilobyte` : 'Search · Kilobyte'
+    case 'why':
+      return 'Hosting · Kilobyte'
+    case 'you':
+      return 'You · Kilobyte'
+    case 'game':
+      return gameTitle ? `${gameTitle} · Kilobyte` : 'Game · Kilobyte'
+    case 'play':
+      return gameTitle ? `Play ${gameTitle} · Kilobyte` : 'Play · Kilobyte'
+    case 'share':
+      return 'Shared cart · Kilobyte'
+    default:
+      return 'Kilobyte — browser games'
+  }
 }

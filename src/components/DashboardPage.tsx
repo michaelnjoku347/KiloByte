@@ -105,11 +105,11 @@ export function DashboardPage({
             <dd>{sourceLabel(game.source)}</dd>
           </div>
           <div>
-            <dt>Kinds</dt>
+            <dt>Genres</dt>
             <dd>{game.genres.join(', ') || '—'}</dd>
           </div>
           <div>
-            <dt>Kind of file</dt>
+            <dt>File</dt>
             <dd>{game.source.kind}</dd>
           </div>
         </dl>
