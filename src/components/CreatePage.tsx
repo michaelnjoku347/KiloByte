@@ -44,7 +44,7 @@ export function CreatePage({
         {([
           ['upload', 'Upload files'],
           ['github', 'Connect GitHub'],
-          ['generate', 'Mint a cart'],
+          ['generate', 'Prompt a cart'],
         ] as const).map(([id, label]) => (
           <button
             key={id}
@@ -111,7 +111,7 @@ function PublisherName({
   }
   return (
     <label className="field">
-      <span>Your name on the card</span>
+      <span>Name on this game</span>
       <input
         value={settings.author}
         onChange={(e) => onSettings({ ...settings, author: e.target.value })}
@@ -171,7 +171,7 @@ function UploadForm({
           title: title.trim(),
           author: settings.author,
           blurb: blurb.trim() || 'Uploaded HTML5 build',
-          description: description.trim() || blurb.trim() || 'Uploaded to this cabinet.',
+          description: description.trim() || blurb.trim() || 'Uploaded HTML5 build.',
           genres: genres.length ? genres : ['Arcade'],
           createdAt: new Date().toISOString(),
           cover: '#e85d3a',
@@ -258,7 +258,7 @@ function UploadForm({
           <input value={blurb} onChange={(e) => setBlurb(e.target.value)} />
         </label>
         <label className="field">
-          <span>Dashboard description</span>
+          <span>Description</span>
           <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
         <GenrePicker value={genres} onChange={setGenres} />
@@ -406,7 +406,7 @@ function GithubForm({
           <input value={blurb} onChange={(e) => setBlurb(e.target.value)} />
         </label>
         <label className="field">
-          <span>Dashboard description</span>
+          <span>Description</span>
           <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
         <GenrePicker value={genres} onChange={setGenres} extra={inspect?.topics ?? []} />
@@ -477,7 +477,7 @@ function GenerateForm({
           </label>
         )}
         <button type="button" className="primary-btn" disabled={busy} onClick={() => void mint()}>
-          {busy ? 'Minting…' : 'Mint cart'}
+          {busy ? 'Making…' : 'Make cart'}
         </button>
       </section>
       <section className="panel recipe">

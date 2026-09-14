@@ -18,7 +18,6 @@ export function GameCard({
   rank?: number
   stagger?: number
   onPlay?: () => void
-  onRemove?: () => void
 }) {
   return (
     <article className={`plate ${compact ? 'compact' : ''}`} style={{ '--stagger': stagger } as CSSProperties}>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { GameSpec } from './types'
 import { useCatalog } from './hooks/useCatalog'
 import { useHashRoute } from './hooks/useHashRoute'
@@ -12,7 +12,7 @@ import { ProfilePage } from './components/ProfilePage'
 import { decodeCart, parseCartJson } from './lib/cart'
 import { recordFromCart } from './lib/record'
 import { ensureGameWorker } from './lib/idb'
-import { go, parseHash } from './lib/route'
+import { go, pageTitle, parseHash, toHash } from './lib/route'
 import { initialsFrom } from './lib/profile'
 import './App.css'
 
@@ -67,13 +67,72 @@ function App() {
     const start = parseHash(typeof location === 'undefined' ? '' : location.hash)
     return start.name === 'search' ? start.query : ''
   })
+  const searchRef = useRef<HTMLInputElement>(null)
+  const skipSearchSync = useRef(false)
+
+  const commitSearch = (query: string, replace: boolean) => {
+    const trimmed = query.trim()
+    const next = trimmed ? ({ name: 'search' as const, query: trimmed }) : ({ name: 'arcade' as const })
+    if (toHash(next) === location.hash) return
+    skipSearchSync.current = true
+    go(next, { replace })
+  }
 
   useEffect(() => {
     void ensureGameWorker()
   }, [])
 
+  useEffect(() => {
+    const onHash = () => {
+      if (skipSearchSync.current) {
+        skipSearchSync.current = false
+        return
+      }
+      const next = parseHash(location.hash)
+      if (next.name === 'search') setQ(next.query)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  useEffect(() => {
+    const trimmed = q.trim()
+    const here = parseHash(location.hash)
+    const currentQuery = here.name === 'search' ? here.query : ''
+    if (trimmed === currentQuery) return
+    if (!trimmed && here.name !== 'search') return
+    const id = window.setTimeout(() => commitSearch(q, true), 220)
+    return () => window.clearTimeout(id)
+  }, [q])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey
+      if (meta && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        searchRef.current?.focus()
+        searchRef.current?.select()
+        return
+      }
+      if (e.key !== '/' || meta || e.altKey) return
+      const target = e.target
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
+        return
+      }
+      if (target instanceof HTMLElement && target.isContentEditable) return
+      e.preventDefault()
+      searchRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const current =
     route.name === 'game' || route.name === 'play' ? catalog.find(route.id) : undefined
+
+  useEffect(() => {
+    document.title = pageTitle(route, current?.title)
+  }, [route, current?.title])
 
   const play = (id: string) => {
     catalog.bumpPlays(id)
@@ -101,15 +160,26 @@ function App() {
 
   return (
     <div className="shell" data-theme={catalog.settings.theme}>
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault()
+          document.getElementById('main')?.focus()
+        }}
+      >
+        Skip to games
+      </a>
       <header className="topbar">
         <button type="button" className="wordmark" onClick={() => go({ name: 'arcade' })}>
           <span>Kilobyte</span>
           <small>games</small>
         </button>
-        <nav className="nav">
+        <nav className="nav" aria-label="Primary">
           <button
             type="button"
             className={route.name === 'arcade' || route.name === 'search' ? 'on' : ''}
+            aria-current={route.name === 'arcade' || route.name === 'search' ? 'page' : undefined}
             onClick={() => go({ name: 'arcade' })}
           >
             Play
@@ -117,6 +187,7 @@ function App() {
           <button
             type="button"
             className={route.name === 'charts' ? 'on' : ''}
+            aria-current={route.name === 'charts' ? 'page' : undefined}
             onClick={() => go({ name: 'charts' })}
           >
             Catalog
@@ -124,6 +195,7 @@ function App() {
           <button
             type="button"
             className={route.name === 'create' ? 'on' : ''}
+            aria-current={route.name === 'create' ? 'page' : undefined}
             onClick={() => go({ name: 'create', tab: 'upload' })}
           >
             Make
@@ -131,6 +203,7 @@ function App() {
           <button
             type="button"
             className={route.name === 'why' ? 'on' : ''}
+            aria-current={route.name === 'why' ? 'page' : undefined}
             onClick={() => go({ name: 'why' })}
           >
             Hosting
@@ -138,18 +211,40 @@ function App() {
         </nav>
         <form
           className="top-search"
+          role="search"
           onSubmit={(e) => {
             e.preventDefault()
-            go({ name: 'search', query: q.trim() })
+            commitSearch(q, false)
           }}
         >
           <label>
             <span className="find-label sr-only">Search</span>
+            <svg className="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+              <path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
             <input
+              ref={searchRef}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search games"
+              autoComplete="off"
+              enterKeyHint="search"
+              name="q"
             />
+            {q ? (
+              <button
+                type="button"
+                className="search-clear"
+                aria-label="Clear search"
+                onClick={() => {
+                  setQ('')
+                  if (route.name === 'search') commitSearch('', true)
+                }}
+              >
+                ×
+              </button>
+            ) : null}
           </label>
         </form>
         <div className="top-meta">
@@ -177,7 +272,7 @@ function App() {
         </div>
       </header>
 
-      <main>
+      <main id="main" tabIndex={-1}>
         {route.name === 'arcade' && (
           <DiscoverPage
             all={catalog.all}
