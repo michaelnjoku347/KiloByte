@@ -1,45 +1,57 @@
 import type { GameRecord } from '../types'
 import { formatBytes } from '../lib/cart'
-import { formatCount, similarGames, visitScore } from '../lib/catalog'
+import { similarGames, shownRating } from '../lib/catalog'
 import { playUrlFor, sourceLabel } from '../lib/record'
 import { go } from '../lib/route'
+import { livePointer } from '../lib/pointer'
 import { GameCard } from './GameCard'
+import { StarRating } from './StarRating'
 
 export function DashboardPage({
   game,
   all,
   plays,
+  ratings,
   mine,
   favorited,
   onRemove,
   onPlay,
   onFavorite,
+  onRate,
   onPlayOther,
 }: {
   game: GameRecord
   all: GameRecord[]
   plays: number
+  ratings: Record<string, number>
   mine: boolean
   favorited: boolean
   onRemove: () => void
   onPlay: () => void
   onFavorite: () => void
+  onRate: (stars: number) => void
   onPlayOther: (id: string) => void
 }) {
   const related = similarGames(game, all, 8)
   const href = playUrlFor(game)
   const github = game.source.kind === 'github' ? game.source.htmlUrl : undefined
-  const visits = visitScore(game, { [game.id]: plays })
+  const score = shownRating(game, ratings)
+  const yours = ratings[game.id] != null
+  const extras = [
+    plays > 0 ? 'Played on this device' : null,
+    game.bytes ? `${formatBytes(game.bytes)} local` : 'hosted off-site',
+  ].filter(Boolean)
 
   return (
     <div className="page dash-page">
       <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
-        ← Back to the floor
+        ← Back
       </button>
       <section className="dossier">
         <div
-          className="dossier-poster"
+          className="dossier-poster tilt"
           style={{ background: `linear-gradient(168deg, ${game.palette.bg}, ${game.cover})` }}
+          {...livePointer}
         >
           <i>{game.genres[0] || 'Game'}</i>
           <span>{game.title}</span>
@@ -49,10 +61,11 @@ export function DashboardPage({
           <h1>{game.title}</h1>
           <p className="creator-row">by {game.author}</p>
           <p className="lede">{game.blurb}</p>
-          <p className="meter-line">
-            {formatCount(visits)} plays · {plays} on this device
-            {game.bytes ? ` · ${formatBytes(game.bytes)} local` : ' · hosted off-site'}
-          </p>
+          <div className="rate-row">
+            <StarRating value={score} size="md" interactive onChange={onRate} />
+            <p className="meter-line">{yours ? 'Your score' : 'Tap a star to rate'}</p>
+          </div>
+          {extras.length > 0 && <p className="meter-line">{extras.join(' · ')}</p>}
           <div className="hero-actions">
             <button type="button" className="play-btn" onClick={onPlay}>
               Play this
@@ -92,11 +105,11 @@ export function DashboardPage({
             <dd>{sourceLabel(game.source)}</dd>
           </div>
           <div>
-            <dt>Kinds</dt>
+            <dt>Genres</dt>
             <dd>{game.genres.join(', ') || '—'}</dd>
           </div>
           <div>
-            <dt>Kind of file</dt>
+            <dt>File</dt>
             <dd>{game.source.kind}</dd>
           </div>
         </dl>
@@ -105,11 +118,18 @@ export function DashboardPage({
       {related.length > 0 && (
         <section className="shelf">
           <header className="shelf-head">
-            <h2>Nearby on the shelf</h2>
+            <h2>More like this</h2>
           </header>
           <div className="shelf-grid">
-            {related.map((item) => (
-              <GameCard key={item.id} game={item} compact onPlay={() => onPlayOther(item.id)} />
+            {related.map((item, i) => (
+              <GameCard
+                key={item.id}
+                game={item}
+                rating={shownRating(item, ratings)}
+                compact
+                stagger={i}
+                onPlay={() => onPlayOther(item.id)}
+              />
             ))}
           </div>
         </section>

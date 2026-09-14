@@ -1,5 +1,5 @@
 import type { ArcadeSettings, ArcadeState, GameRecord, GameSpec, UserProfile } from '../types'
-import { HOUSE_CARTS } from '../data/house'
+import { HOUSE_CARTS, HOUSE_CART_RATINGS } from '../data/house'
 import { HOUSE_GAMES } from '../data/catalog'
 import { recordFromCart } from './record'
 import { parseTheme } from './theme'
@@ -21,9 +21,21 @@ export function emptyState(): ArcadeState {
     plays: {},
     recents: [],
     favorites: [],
+    ratings: {},
     profile: null,
     signedIn: false,
   }
+}
+
+function readRatings(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object') return {}
+  const out: Record<string, number> = {}
+  for (const [id, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof raw !== 'number' || !Number.isFinite(raw)) continue
+    const n = Math.round(raw)
+    if (n >= 1 && n <= 5) out[id] = n
+  }
+  return out
 }
 
 function readProfile(value: unknown): UserProfile | null {
@@ -62,6 +74,7 @@ export function loadState(): ArcadeState {
         plays: {},
         recents: [],
         favorites: [],
+        ratings: {},
         profile: null,
         signedIn: false,
       }
@@ -86,6 +99,7 @@ export function loadState(): ArcadeState {
       favorites: Array.isArray(parsed.favorites)
         ? parsed.favorites.filter((id) => typeof id === 'string')
         : [],
+      ratings: readRatings(parsed.ratings),
       profile: readProfile(parsed.profile),
       signedIn: Boolean(parsed.signedIn && readProfile(parsed.profile)),
     }
@@ -103,6 +117,7 @@ export function saveState(state: ArcadeState): void {
       plays: state.plays,
       recents: state.recents,
       favorites: state.favorites,
+      ratings: state.ratings,
       profile: state.profile,
       signedIn: state.signedIn,
     }),
@@ -110,7 +125,13 @@ export function saveState(state: ArcadeState): void {
 }
 
 export function houseLibrary(): GameRecord[] {
-  return [...HOUSE_GAMES, ...HOUSE_CARTS.map(recordFromCart)]
+  return [
+    ...HOUSE_GAMES,
+    ...HOUSE_CARTS.map((spec) => ({
+      ...recordFromCart(spec),
+      rating: HOUSE_CART_RATINGS[spec.id] ?? 0,
+    })),
+  ]
 }
 
 export function publishedGames(state: ArcadeState): GameRecord[] {

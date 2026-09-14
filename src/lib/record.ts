@@ -21,7 +21,7 @@ export function recordFromCart(spec: GameSpec): GameRecord {
     },
     house: spec.house,
     bytes: cartBytes(spec),
-    visits: 0,
+    rating: 0,
     source: { kind: 'cart', spec },
   }
 }

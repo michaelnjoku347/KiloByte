@@ -64,3 +64,12 @@ export const HOUSE_CARTS: GameSpec[] = [
     670134,
   ),
 ]
+
+export const HOUSE_CART_RATINGS: Record<string, number> = {
+  house_star_nibbler: 4.2,
+  house_brick_lantern: 4.1,
+  house_moss_run: 3.9,
+  house_neon_rain: 3.7,
+  house_coil: 3.6,
+  house_last_buoy: 3.5,
+}

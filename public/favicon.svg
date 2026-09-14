@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="14" fill="#16110d"/>
-  <rect x="14" y="12" width="36" height="40" rx="6" fill="#3a2c20"/>
-  <rect x="14" y="12" width="7" height="40" fill="#e85d3a"/>
-  <rect x="26" y="18" width="20" height="22" rx="3" fill="#f3ead7"/>
-  <circle cx="30" cy="46" r="3" fill="#c6f26d"/>
-  <circle cx="38" cy="46" r="3" fill="#e85d3a"/>
-  <circle cx="46" cy="46" r="3" fill="#f6d37a"/>
+  <defs>
+    <linearGradient id="g" x1="8" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6d5efc"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#g)"/>
+  <path fill="#fff" d="M20 14h9v15.2L42.2 14H52L35.4 32.6 52 50h-9.8L29 34.7V50h-9V14Z"/>
 </svg>

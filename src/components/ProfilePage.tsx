@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { GameRecord, SiteTheme, UserProfile } from '../types'
+import { shownRating } from '../lib/catalog'
 import { GameCard } from './GameCard'
 import { go } from '../lib/route'
 import { hasPassphrase, initialsFrom } from '../lib/profile'
@@ -10,7 +11,7 @@ export function ProfilePage({
   theme,
   mine,
   saved,
-  plays,
+  ratings,
   onPlay,
   onSignUp,
   onSignIn,
@@ -24,7 +25,7 @@ export function ProfilePage({
   theme: SiteTheme
   mine: GameRecord[]
   saved: GameRecord[]
-  plays: Record<string, number>
+  ratings: Record<string, number>
   onPlay: (id: string) => void
   onSignUp: (input: { displayName: string; handle: string; bio?: string; passphrase?: string }) => Promise<void>
   onSignIn: (passphrase?: string) => Promise<void>
@@ -51,14 +52,14 @@ export function ProfilePage({
           profile={profile}
           mine={mine}
           saved={saved}
-          plays={plays}
+          ratings={ratings}
           onPlay={onPlay}
           onSignOut={onSignOut}
           onUpdate={onUpdate}
           onRemove={onRemove}
         />
       ) : profile ? (
-        <SignInCard profile={profile} onSignIn={onSignIn} />
+        <SignInCard profile={profile} onSignIn={onSignIn} onRemove={onRemove} />
       ) : (
         <GuestSplit onSignUp={onSignUp} />
       )}
@@ -76,7 +77,7 @@ function AppearancePanel({
   return (
     <section className="panel appearance-panel">
       <h2>Appearance</h2>
-      <p className="meter-line">Light paper or a night desk. Stays on this browser.</p>
+      <p className="meter-line">Light or dark. Saved on this browser.</p>
       <div className="theme-switch" role="radiogroup" aria-label="Appearance">
         <button
           type="button"
@@ -115,7 +116,7 @@ function GuestSplit({
           type a name under Make.
         </p>
         <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
-          Back to the floor
+          Back to Play
         </button>
       </section>
       <SignUpForm onSignUp={onSignUp} />
@@ -151,31 +152,38 @@ function SignUpForm({
     <section className="panel">
       <h2>Make a card</h2>
       <p className="meter-line">Optional. Lives on this device only.</p>
-      <label className="field">
-        <span>Name on your games</span>
-        <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Mina" />
-      </label>
-      <label className="field">
-        <span>Handle</span>
-        <input value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="mina" />
-      </label>
-      <label className="field">
-        <span>A line about you (optional)</span>
-        <textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
-      </label>
-      <label className="field">
-        <span>Passphrase (optional)</span>
-        <input
-          type="password"
-          value={passphrase}
-          onChange={(e) => setPassphrase(e.target.value)}
-          placeholder="Only if this browser is shared"
-        />
-      </label>
-      {error && <p className="form-error">{error}</p>}
-      <button type="button" className="play-btn" disabled={busy} onClick={() => void submit()}>
-        {busy ? 'Making…' : 'Make this card'}
-      </button>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          void submit()
+        }}
+      >
+        <label className="field">
+          <span>Name on your games</span>
+          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Mina" />
+        </label>
+        <label className="field">
+          <span>Handle</span>
+          <input value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="mina" />
+        </label>
+        <label className="field">
+          <span>A line about you (optional)</span>
+          <textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
+        </label>
+        <label className="field">
+          <span>Passphrase (optional)</span>
+          <input
+            type="password"
+            value={passphrase}
+            onChange={(e) => setPassphrase(e.target.value)}
+            placeholder="Only if this browser is shared"
+          />
+        </label>
+        {error && <p className="form-error">{error}</p>}
+        <button type="submit" className="play-btn" disabled={busy}>
+          {busy ? 'Making…' : 'Make this card'}
+        </button>
+      </form>
     </section>
   )
 }
@@ -183,9 +191,11 @@ function SignUpForm({
 function SignInCard({
   profile,
   onSignIn,
+  onRemove,
 }: {
   profile: UserProfile
   onSignIn: (passphrase?: string) => Promise<void>
+  onRemove: () => void
 }) {
   const [passphrase, setPassphrase] = useState('')
   const [error, setError] = useState('')
@@ -210,21 +220,34 @@ function SignInCard({
       <p className="lede">
         A card for <strong>@{profile.handle}</strong> is already on this browser.
       </p>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          void submit()
+        }}
+      >
+        {locked && (
+          <label className="field">
+            <span>Passphrase</span>
+            <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} />
+          </label>
+        )}
+        {error && <p className="form-error">{error}</p>}
+        <div className="hero-actions">
+          <button type="submit" className="play-btn" disabled={busy}>
+            Open my card
+          </button>
+          <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
+            Stay a guest
+          </button>
+          <button type="button" className="ghost-btn" onClick={onRemove}>
+            Remove this card
+          </button>
+        </div>
+      </form>
       {locked && (
-        <label className="field">
-          <span>Passphrase</span>
-          <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} />
-        </label>
+        <p className="meter-line">Forgot the passphrase? Remove the card from this browser to start over.</p>
       )}
-      {error && <p className="form-error">{error}</p>}
-      <div className="hero-actions">
-        <button type="button" className="play-btn" disabled={busy} onClick={() => void submit()}>
-          Open my card
-        </button>
-        <button type="button" className="ghost-btn" onClick={() => go({ name: 'arcade' })}>
-          Stay a guest
-        </button>
-      </div>
     </section>
   )
 }
@@ -233,7 +256,7 @@ function SignedInCard({
   profile,
   mine,
   saved,
-  plays,
+  ratings,
   onPlay,
   onSignOut,
   onUpdate,
@@ -242,7 +265,7 @@ function SignedInCard({
   profile: UserProfile
   mine: GameRecord[]
   saved: GameRecord[]
-  plays: Record<string, number>
+  ratings: Record<string, number>
   onPlay: (id: string) => void
   onSignOut: () => void
   onUpdate: (patch: { displayName?: string; bio?: string; passphrase?: string }) => Promise<void>
@@ -291,7 +314,13 @@ function SignedInCard({
           </header>
           <div className="shelf-grid">
             {mine.map((game) => (
-              <GameCard key={game.id} game={game} plays={plays[game.id] ?? 0} compact onPlay={() => onPlay(game.id)} />
+              <GameCard
+                key={game.id}
+                game={game}
+                rating={shownRating(game, ratings)}
+                compact
+                onPlay={() => onPlay(game.id)}
+              />
             ))}
           </div>
         </section>
@@ -304,7 +333,13 @@ function SignedInCard({
           </header>
           <div className="shelf-grid">
             {saved.map((game) => (
-              <GameCard key={game.id} game={game} plays={plays[game.id] ?? 0} compact onPlay={() => onPlay(game.id)} />
+              <GameCard
+                key={game.id}
+                game={game}
+                rating={shownRating(game, ratings)}
+                compact
+                onPlay={() => onPlay(game.id)}
+              />
             ))}
           </div>
         </section>
@@ -312,30 +347,37 @@ function SignedInCard({
 
       <section className="panel">
         <h2>Edit the card</h2>
-        <label className="field">
-          <span>Name</span>
-          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-        </label>
-        <label className="field">
-          <span>A line about you</span>
-          <textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
-        </label>
-        <label className="field">
-          <span>New passphrase (optional)</span>
-          <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} />
-        </label>
-        {error && <p className="form-error">{error}</p>}
-        <div className="hero-actions">
-          <button type="button" className="play-btn" disabled={busy} onClick={() => void save()}>
-            Save changes
-          </button>
-          <button type="button" className="ghost-btn" onClick={onSignOut}>
-            Sign out
-          </button>
-          <button type="button" className="ghost-btn" onClick={onRemove}>
-            Remove this card
-          </button>
-        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            void save()
+          }}
+        >
+          <label className="field">
+            <span>Name</span>
+            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+          </label>
+          <label className="field">
+            <span>A line about you</span>
+            <textarea rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
+          </label>
+          <label className="field">
+            <span>New passphrase (optional)</span>
+            <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} />
+          </label>
+          {error && <p className="form-error">{error}</p>}
+          <div className="hero-actions">
+            <button type="submit" className="play-btn" disabled={busy}>
+              Save changes
+            </button>
+            <button type="button" className="ghost-btn" onClick={onSignOut}>
+              Sign out
+            </button>
+            <button type="button" className="ghost-btn" onClick={onRemove}>
+              Remove this card
+            </button>
+          </div>
+        </form>
       </section>
     </>
   )

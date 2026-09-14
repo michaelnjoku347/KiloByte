@@ -34,17 +34,17 @@ export function CreatePage({
     <div className="page studio-page">
       <section className="hero compact">
         <p className="eyebrow">Make</p>
-        <h1>Ship a real game. We store a pointer.</h1>
+        <h1>Publish a game. We store a pointer.</h1>
         <p className="lede">
           Upload an HTML5 build, connect the GitHub repo that already hosts it, or mint a
-          tiny JSON cart. Any genre. The arcade keeps metadata; your files stay cheap.
+          tiny JSON cart. Kilobyte keeps the listing; your files stay cheap.
         </p>
       </section>
       <div className="filters create-tabs" role="tablist" aria-label="Create method">
         {([
           ['upload', 'Upload files'],
           ['github', 'Connect GitHub'],
-          ['generate', 'Mint a cart'],
+          ['generate', 'Prompt a cart'],
         ] as const).map(([id, label]) => (
           <button
             key={id}
@@ -111,7 +111,7 @@ function PublisherName({
   }
   return (
     <label className="field">
-      <span>Your name on the card</span>
+      <span>Name on this game</span>
       <input
         value={settings.author}
         onChange={(e) => onSettings({ ...settings, author: e.target.value })}
@@ -171,12 +171,13 @@ function UploadForm({
           title: title.trim(),
           author: settings.author,
           blurb: blurb.trim() || 'Uploaded HTML5 build',
-          description: description.trim() || blurb.trim() || 'Uploaded to this cabinet.',
+          description: description.trim() || blurb.trim() || 'Uploaded HTML5 build.',
           genres: genres.length ? genres : ['Arcade'],
           createdAt: new Date().toISOString(),
           cover: '#e85d3a',
           palette: { bg: '#221910', paper: '#f3ead7', accent: '#e85d3a' },
           bytes: bundleBytes(files),
+          rating: 0,
           source: { kind: 'upload', entry },
         },
         files,
@@ -257,7 +258,7 @@ function UploadForm({
           <input value={blurb} onChange={(e) => setBlurb(e.target.value)} />
         </label>
         <label className="field">
-          <span>Dashboard description</span>
+          <span>Description</span>
           <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
         <GenrePicker value={genres} onChange={setGenres} />
@@ -330,6 +331,7 @@ function GithubForm({
       cover: '#c6f26d',
       palette: { bg: '#101014', paper: '#f4f1ea', accent: '#c6f26d' },
       bytes: 0,
+      rating: 0,
       source: {
         kind: 'github',
         owner: inspect.ref.owner,
@@ -404,7 +406,7 @@ function GithubForm({
           <input value={blurb} onChange={(e) => setBlurb(e.target.value)} />
         </label>
         <label className="field">
-          <span>Dashboard description</span>
+          <span>Description</span>
           <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
         <GenrePicker value={genres} onChange={setGenres} extra={inspect?.topics ?? []} />
@@ -475,7 +477,7 @@ function GenerateForm({
           </label>
         )}
         <button type="button" className="primary-btn" disabled={busy} onClick={() => void mint()}>
-          {busy ? 'Minting…' : 'Mint cart'}
+          {busy ? 'Making…' : 'Make cart'}
         </button>
       </section>
       <section className="panel recipe">
