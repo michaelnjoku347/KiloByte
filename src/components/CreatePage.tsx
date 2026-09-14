@@ -36,7 +36,7 @@ export function CreatePage({
         <p className="eyebrow">Make</p>
         <h1>Publish a game. We store a pointer.</h1>
         <p className="lede">
-          Upload an HTML5 build, connect the GitHub repo that already hosts it, or mint a
+          Upload an HTML5 build, connect the GitHub repo that already hosts it, or prompt a
           tiny JSON cart. Kilobyte keeps the listing; your files stay cheap.
         </p>
       </section>
