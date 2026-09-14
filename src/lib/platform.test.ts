@@ -111,7 +111,7 @@ describe('routes', () => {
 })
 
 describe('catalog shelves', () => {
-  it('ranks by star rating and builds You were here / Worth a look / kind shelves', () => {
+  it('ranks by star rating and builds Continue / Worth a look / kind shelves', () => {
     expect(formatRating(4.9)).toBe('4.9')
     expect(formatRating(0)).toBe('—')
     expect(clampRating(6)).toBe(5)

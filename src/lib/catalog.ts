@@ -54,7 +54,7 @@ export function buildRails(
   const byId = new Map(games.map((g) => [g.id, g]))
   const rails: Rail[] = []
   const continued = recents.map((id) => byId.get(id)).filter((g): g is GameRecord => Boolean(g))
-  if (continued.length) rails.push({ id: 'continue', title: 'You were here', games: continued })
+  if (continued.length) rails.push({ id: 'continue', title: 'Continue', games: continued })
   const liked = favorites.map((id) => byId.get(id)).filter((g): g is GameRecord => Boolean(g))
   if (liked.length) rails.push({ id: 'favorites', title: 'Saved', games: liked })
   const recommended = rankGames(games, ratings).slice(0, 12)
