@@ -12,7 +12,9 @@ export function ProfilePage({
   mine,
   saved,
   ratings,
+  favorites,
   onPlay,
+  onSave,
   onSignUp,
   onSignIn,
   onSignOut,
@@ -26,7 +28,9 @@ export function ProfilePage({
   mine: GameRecord[]
   saved: GameRecord[]
   ratings: Record<string, number>
+  favorites: string[]
   onPlay: (id: string) => void
+  onSave: (id: string) => void
   onSignUp: (input: { displayName: string; handle: string; bio?: string; passphrase?: string }) => Promise<void>
   onSignIn: (passphrase?: string) => Promise<void>
   onSignOut: () => void
@@ -53,7 +57,9 @@ export function ProfilePage({
           mine={mine}
           saved={saved}
           ratings={ratings}
+          favorites={favorites}
           onPlay={onPlay}
+          onSave={onSave}
           onSignOut={onSignOut}
           onUpdate={onUpdate}
           onRemove={onRemove}
@@ -257,7 +263,9 @@ function SignedInCard({
   mine,
   saved,
   ratings,
+  favorites,
   onPlay,
+  onSave,
   onSignOut,
   onUpdate,
   onRemove,
@@ -266,7 +274,9 @@ function SignedInCard({
   mine: GameRecord[]
   saved: GameRecord[]
   ratings: Record<string, number>
+  favorites: string[]
   onPlay: (id: string) => void
+  onSave: (id: string) => void
   onSignOut: () => void
   onUpdate: (patch: { displayName?: string; bio?: string; passphrase?: string }) => Promise<void>
   onRemove: () => void
@@ -318,8 +328,10 @@ function SignedInCard({
                 key={game.id}
                 game={game}
                 rating={shownRating(game, ratings)}
+                favorited={favorites.includes(game.id)}
                 compact
                 onPlay={() => onPlay(game.id)}
+                onSave={() => onSave(game.id)}
               />
             ))}
           </div>
@@ -337,8 +349,10 @@ function SignedInCard({
                 key={game.id}
                 game={game}
                 rating={shownRating(game, ratings)}
+                favorited={favorites.includes(game.id)}
                 compact
                 onPlay={() => onPlay(game.id)}
+                onSave={() => onSave(game.id)}
               />
             ))}
           </div>

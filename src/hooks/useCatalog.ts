@@ -89,7 +89,9 @@ export function useCatalog() {
   }
 
   const toggleFavorite = (id: string) => {
+    const removing = favorites.includes(id)
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+    flash(removing ? 'Removed from Saved' : 'Saved')
   }
 
   const rate = (id: string, stars: number) => {
