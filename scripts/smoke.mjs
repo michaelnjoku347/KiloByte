@@ -47,10 +47,33 @@ console.log('game card ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
+  buttons.find((b) => b.textContent?.trim() === '← Back')?.click()
+})
+await page.waitForSelector('.plate-save')
+await page.evaluate(() => {
+  document.querySelector('.plate-save')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+})
+await page.waitForFunction(() => document.body.innerText.includes('Saved'))
+await page.waitForSelector('.plate-save.on')
+console.log('card save ok')
+
+await page.evaluate(() => {
+  const buttons = [...document.querySelectorAll('button')]
   buttons.find((b) => b.textContent?.trim() === 'Play this')?.click()
 })
 await page.waitForSelector('canvas, iframe.game-frame')
 console.log('play ok')
+
+await page.keyboard.press('Escape')
+await page.waitForSelector('.dossier')
+console.log('escape leaves play ok')
+
+await page.evaluate(() => {
+  const buttons = [...document.querySelectorAll('button')]
+  buttons.find((b) => b.textContent?.trim() === 'Play this')?.click()
+})
+await page.waitForSelector('canvas, iframe.game-frame')
+console.log('play again ok')
 
 await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
