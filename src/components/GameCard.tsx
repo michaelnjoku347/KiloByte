@@ -10,14 +10,18 @@ export function GameCard({
   compact = false,
   rank,
   stagger = 0,
+  favorited = false,
   onPlay,
+  onSave,
 }: {
   game: GameRecord
   rating?: number
   compact?: boolean
   rank?: number
   stagger?: number
+  favorited?: boolean
   onPlay?: () => void
+  onSave?: () => void
 }) {
   return (
     <article className={`plate ${compact ? 'compact' : ''}`} style={{ '--stagger': stagger } as CSSProperties}>
@@ -41,17 +45,34 @@ export function GameCard({
           </span>
         </span>
       </button>
-      {onPlay && (
-        <button
-          type="button"
-          className="plate-play"
-          onClick={(e) => {
-            e.stopPropagation()
-            onPlay()
-          }}
-        >
-          Play
-        </button>
+      {(onPlay || onSave) && (
+        <div className="plate-actions">
+          {onPlay && (
+            <button
+              type="button"
+              className="plate-play"
+              onClick={(e) => {
+                e.stopPropagation()
+                onPlay()
+              }}
+            >
+              Play
+            </button>
+          )}
+          {onSave && (
+            <button
+              type="button"
+              className={`plate-save${favorited ? ' on' : ''}`}
+              aria-pressed={favorited}
+              onClick={(e) => {
+                e.stopPropagation()
+                onSave()
+              }}
+            >
+              {favorited ? 'Saved' : 'Save'}
+            </button>
+          )}
+        </div>
       )}
     </article>
   )

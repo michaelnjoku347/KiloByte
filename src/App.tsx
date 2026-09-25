@@ -90,6 +90,7 @@ function App() {
       }
       const next = parseHash(location.hash)
       if (next.name === 'search') setQ(next.query)
+      else setQ('')
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
@@ -281,6 +282,7 @@ function App() {
             recents={catalog.recents}
             favorites={catalog.favorites}
             onPlay={play}
+            onSave={catalog.toggleFavorite}
           />
         )}
         {route.name === 'search' && (
@@ -292,6 +294,7 @@ function App() {
             favorites={catalog.favorites}
             searchQuery={route.query}
             onPlay={play}
+            onSave={catalog.toggleFavorite}
           />
         )}
         {route.name === 'charts' && (
@@ -317,7 +320,9 @@ function App() {
             mine={catalog.mine}
             saved={catalog.all.filter((g) => catalog.favorites.includes(g.id))}
             ratings={catalog.ratings}
+            favorites={catalog.favorites}
             onPlay={play}
+            onSave={catalog.toggleFavorite}
             onSignUp={catalog.signUp}
             onSignIn={catalog.signIn}
             onSignOut={catalog.signOut}
@@ -334,6 +339,7 @@ function App() {
             ratings={catalog.ratings}
             mine={catalog.mineIds.has(current.id)}
             favorited={catalog.favorites.includes(current.id)}
+            favorites={catalog.favorites}
             onRemove={() => {
               void catalog.remove(current.id)
               go({ name: 'arcade' })
@@ -342,6 +348,7 @@ function App() {
             onFavorite={() => catalog.toggleFavorite(current.id)}
             onRate={(stars) => catalog.rate(current.id, stars)}
             onPlayOther={play}
+            onSaveOther={catalog.toggleFavorite}
           />
         )}
         {route.name === 'play' && current && (
