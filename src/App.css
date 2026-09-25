@@ -735,6 +735,33 @@ h2 {
   font-size: 0.85rem;
 }
 
+.plate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.plate-save {
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.plate-save.on {
+  border-color: color-mix(in srgb, var(--ember) 45%, var(--line));
+  color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 10%, transparent);
+}
+
+.search-kinds {
+  margin: 4px 0 18px;
+}
+
 .catalog-hero {
   padding: 6px 0 18px;
 }
@@ -1393,8 +1420,9 @@ h2 {
 
 .plate-copy strong,
 .plate-play,
+.plate-save,
 .index-title {
-  transition: color 0.18s ease, background-color 0.18s ease;
+  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
 }
 
 .plate:hover .plate-copy strong,
@@ -1403,13 +1431,19 @@ h2 {
   color: var(--ember);
 }
 
-.plate-play {
-  transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+.plate-play,
+.plate-save {
+  transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
 .plate:hover .plate-play {
   background: var(--ember);
   color: var(--play-face);
+}
+
+.plate-save:hover {
+  color: var(--ember);
+  border-color: color-mix(in srgb, var(--ember) 40%, var(--line));
 }
 
 .index-table tbody tr:hover td {

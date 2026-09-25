@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { GameRecord } from '../types'
 import { Cabinet } from './Cabinet'
 import { encodeCart, formatBytes, shareUrl } from '../lib/cart'
@@ -29,6 +29,20 @@ export function PlayView({
   useEffect(() => {
     if (game.source.kind === 'upload') void ensureGameWorker()
   }, [game])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      const target = e.target
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
+        return
+      }
+      e.preventDefault()
+      go({ name: 'game', id: game.id })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [game.id])
 
   const copy = async () => {
     if (spec) {
@@ -107,7 +121,7 @@ export function PlayView({
       )}
       {spec && (
         <p className="controls-help">
-          Move with arrows or WASD. Space fires, jumps, or starts.
+          Move with arrows or WASD. Space fires, jumps, or starts. Esc leaves play.
         </p>
       )}
     </div>
@@ -129,6 +143,10 @@ function RemoteFrame({
 }) {
   const useDirect = /github\.io\/|localhost|\/games\/|\/local-game\//.test(url)
   const [srcdoc, setSrcdoc] = useState<string | null>(null)
+  const onFailRef = useRef(onFail)
+  useEffect(() => {
+    onFailRef.current = onFail
+  }, [onFail])
 
   useEffect(() => {
     if (useDirect) return
@@ -144,7 +162,7 @@ function RemoteFrame({
         setSrcdoc(injected)
       })
       .catch(() => {
-        if (alive) onFail()
+        if (alive) onFailRef.current()
       })
     return () => {
       alive = false

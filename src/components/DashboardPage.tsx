@@ -14,11 +14,13 @@ export function DashboardPage({
   ratings,
   mine,
   favorited,
+  favorites,
   onRemove,
   onPlay,
   onFavorite,
   onRate,
   onPlayOther,
+  onSaveOther,
 }: {
   game: GameRecord
   all: GameRecord[]
@@ -26,11 +28,13 @@ export function DashboardPage({
   ratings: Record<string, number>
   mine: boolean
   favorited: boolean
+  favorites: string[]
   onRemove: () => void
   onPlay: () => void
   onFavorite: () => void
   onRate: (stars: number) => void
   onPlayOther: (id: string) => void
+  onSaveOther: (id: string) => void
 }) {
   const related = similarGames(game, all, 8)
   const href = playUrlFor(game)
@@ -126,9 +130,11 @@ export function DashboardPage({
                 key={item.id}
                 game={item}
                 rating={shownRating(item, ratings)}
+                favorited={favorites.includes(item.id)}
                 compact
                 stagger={i}
                 onPlay={() => onPlayOther(item.id)}
+                onSave={() => onSaveOther(item.id)}
               />
             ))}
           </div>

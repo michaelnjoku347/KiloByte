@@ -14,6 +14,7 @@ export function DiscoverPage({
   favorites,
   searchQuery,
   onPlay,
+  onSave,
 }: {
   all: GameRecord[]
   mineIds: Set<string>
@@ -22,6 +23,7 @@ export function DiscoverPage({
   favorites: string[]
   searchQuery?: string
   onPlay: (id: string) => void
+  onSave: (id: string) => void
 }) {
   const featured = featuredGame(all, ratings)
   const shelves = useMemo(
@@ -48,6 +50,16 @@ export function DiscoverPage({
             {results.length} match{results.length === 1 ? '' : 'es'} for “{searchQuery || 'everything'}”
           </p>
         </header>
+        <nav className="kind-index search-kinds" aria-label="Browse by genre instead">
+          <p className="kind-label">Or browse</p>
+          <div className="kind-links">
+            {CHART_GENRES.map((genre) => (
+              <button key={genre} type="button" className="kind-link" onClick={() => go({ name: 'charts', genre })}>
+                {genre}
+              </button>
+            ))}
+          </div>
+        </nav>
         {results.length === 0 ? (
           <p className="empty">Nothing by that name. Try Puzzle, Simulator, or a title like Dock Ledger.</p>
         ) : (
@@ -57,8 +69,10 @@ export function DiscoverPage({
                 key={game.id}
                 game={game}
                 rating={shownRating(game, ratings)}
+                favorited={favorites.includes(game.id)}
                 stagger={i}
                 onPlay={() => onPlay(game.id)}
+                onSave={() => onSave(game.id)}
               />
             ))}
           </div>
@@ -150,9 +164,11 @@ export function DiscoverPage({
                 key={game.id}
                 game={game}
                 rating={shownRating(game, ratings)}
+                favorited={favorites.includes(game.id)}
                 compact
                 stagger={i}
                 onPlay={() => onPlay(game.id)}
+                onSave={() => onSave(game.id)}
               />
             ))}
           </div>
