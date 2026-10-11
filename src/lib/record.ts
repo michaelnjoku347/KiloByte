@@ -29,8 +29,8 @@ export function recordFromCart(spec: GameSpec): GameRecord {
 export function sourceKind(source: GameSource): SourceFilter {
   if (source.kind === 'github') return 'github'
   if (source.kind === 'upload') return 'upload'
-  if (source.kind === 'html') return 'house'
-  return 'cart'
+  if (source.kind === 'cart') return 'cart'
+  return 'house'
 }
 
 export function sourceLabel(source: GameSource): string {
@@ -41,6 +41,8 @@ export function sourceLabel(source: GameSource): string {
       return 'Uploaded build'
     case 'html':
       return 'On-site build'
+    case 'stage':
+      return 'WebGL · this tab'
     default:
       return 'JSON cart'
   }

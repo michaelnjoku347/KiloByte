@@ -5,6 +5,7 @@ import { go } from '../lib/route'
 import { livePointer } from '../lib/pointer'
 import { GameCard } from './GameCard'
 import { StarRating } from './StarRating'
+import { CinderField } from './CinderField'
 
 export function DiscoverPage({
   all,
@@ -25,13 +26,18 @@ export function DiscoverPage({
   onPlay: (id: string) => void
   onSave: (id: string) => void
 }) {
-  const featured = featuredGame(all, ratings)
+  const flagship = all.find((game) => game.source.kind === 'stage')
+  const featured = flagship ?? featuredGame(all, ratings)
   const shelves = useMemo(
     () =>
-      buildRails(all, ratings, recents, mineIds, favorites).filter(
-        (shelf) => !shelf.id.startsWith('genre-'),
-      ),
-    [all, ratings, recents, mineIds, favorites],
+      buildRails(all, ratings, recents, mineIds, favorites)
+        .filter((shelf) => !shelf.id.startsWith('genre-'))
+        .map((shelf) =>
+          shelf.id === 'recommended' && flagship
+            ? { ...shelf, games: shelf.games.filter((game) => game.id !== flagship.id) }
+            : shelf,
+        ),
+    [all, ratings, recents, mineIds, favorites, flagship],
   )
   const results = useMemo(
     () =>
@@ -83,24 +89,46 @@ export function DiscoverPage({
 
   return (
     <div className="page floor-page">
-      <section className="howto" aria-label="How Kilobyte works">
-        <ol>
-          <li>
-            <strong>1</strong>
-            <span>Browse a game.</span>
-          </li>
-          <li>
-            <strong>2</strong>
-            <span>Play it in this tab.</span>
-          </li>
-          <li>
-            <strong>3</strong>
-            <span>Publish yours from Make.</span>
-          </li>
-        </ol>
-      </section>
+      {featured && featured.source.kind === 'stage' && (
+        <section className="lead lead-stage">
+          <div className="lead-spread">
+            <div className="lead-stage-view">
+              <CinderField mode="preview" />
+              <button
+                type="button"
+                className="lead-stage-hit"
+                aria-label={`${featured.title} details`}
+                onClick={() => go({ name: 'game', id: featured.id })}
+              />
+            </div>
+            <div className="lead-body">
+              <p className="eyebrow">In this tab</p>
+              <h1>{featured.title}</h1>
+              <p className="lede">{featured.blurb}</p>
+              <p className="stage-specs">
+                <span>WebGL2</span>
+                <span>Mouse look</span>
+                <span>Your GPU</span>
+              </p>
+              <p className="meter-line lead-rating">
+                <span>{featured.genres.join(' · ')}</span>
+                <StarRating value={shownRating(featured, ratings)} size="md" />
+                <span>{featured.author}</span>
+              </p>
+              <div className="hero-actions">
+                <button type="button" className="play-btn" onClick={() => onPlay(featured.id)}>
+                  Play this
+                </button>
+                <button type="button" className="ghost-btn" onClick={() => go({ name: 'game', id: featured.id })}>
+                  Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
-      {featured && (
+      {featured && featured.source.kind !== 'stage' && (
         <section className="lead">
           <p className="eyebrow">Featured</p>
           <div className="lead-spread">
@@ -136,6 +164,23 @@ export function DiscoverPage({
           </div>
         </section>
       )}
+
+      <section className="howto" aria-label="How Kilobyte works">
+        <ol>
+          <li>
+            <strong>1</strong>
+            <span>Pick a title.</span>
+          </li>
+          <li>
+            <strong>2</strong>
+            <span>Launch it in this tab.</span>
+          </li>
+          <li>
+            <strong>3</strong>
+            <span>Publish a WebGL or HTML build.</span>
+          </li>
+        </ol>
+      </section>
 
       <nav className="kind-index" aria-label="Game genres">
         <p className="kind-label">Browse</p>

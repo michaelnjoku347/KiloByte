@@ -114,7 +114,7 @@ export function DashboardPage({
           </div>
           <div>
             <dt>File</dt>
-            <dd>{game.source.kind}</dd>
+            <dd>{game.source.kind === 'stage' ? 'WebGL2' : game.source.kind}</dd>
           </div>
         </dl>
       </section>

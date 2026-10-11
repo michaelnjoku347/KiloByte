@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { GameRecord } from '../types'
 import { Cabinet } from './Cabinet'
+import { CinderField } from './CinderField'
 import { encodeCart, formatBytes, shareUrl } from '../lib/cart'
 import { playUrlFor, sourceLabel } from '../lib/record'
 import { remixCart } from '../lib/generate'
@@ -22,6 +23,7 @@ export function PlayView({
   flash: (message: string) => void
 }) {
   const spec = game.source.kind === 'cart' ? game.source.spec : undefined
+  const stage = game.source.kind === 'stage'
   const iframe = playUrlFor(game)
   const [copied, setCopied] = useState(false)
   const [frameError, setFrameError] = useState(false)
@@ -33,6 +35,7 @@ export function PlayView({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
+      if (document.pointerLockElement) return
       const target = e.target
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
         return
@@ -64,7 +67,7 @@ export function PlayView({
   }
 
   return (
-    <div className="page play-page">
+    <div className={`page play-page${stage ? ' play-stage' : ''}`}>
       <div className="play-head">
         <button type="button" className="ghost-btn" onClick={() => go({ name: 'game', id: game.id })}>
           ← Back
@@ -108,7 +111,8 @@ export function PlayView({
       </div>
 
       {spec && <Cabinet spec={spec} />}
-      {!spec && iframe && (
+      {stage && <CinderField mode="play" />}
+      {!spec && !stage && iframe && (
         <RemoteFrame title={game.title} url={iframe} onFail={() => setFrameError(true)} />
       )}
       {frameError && iframe && (
@@ -122,6 +126,11 @@ export function PlayView({
       {spec && (
         <p className="controls-help">
           Move with arrows or WASD. Space fires, jumps, or starts. Esc leaves play.
+        </p>
+      )}
+      {stage && (
+        <p className="controls-help">
+          Click to look. WASD to move. Esc releases the mouse, then leaves the session.
         </p>
       )}
     </div>
