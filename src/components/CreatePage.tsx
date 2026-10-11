@@ -36,8 +36,8 @@ export function CreatePage({
         <p className="eyebrow">Make</p>
         <h1>Publish a game. We store a pointer.</h1>
         <p className="lede">
-          Upload an HTML5 build, connect the GitHub repo that already hosts it, or prompt a
-          tiny JSON cart. Kilobyte keeps the listing; your files stay cheap.
+          Upload a WebGL or HTML5 build, connect the GitHub repo that already hosts it, or prompt a
+          tiny JSON cart. Kilobyte launches it in this tab; your files stay cheap.
         </p>
       </section>
       <div className="filters create-tabs" role="tablist" aria-label="Create method">
