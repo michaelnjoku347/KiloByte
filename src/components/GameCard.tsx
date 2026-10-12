@@ -35,6 +35,7 @@ export function GameCard({
         >
           {rank !== undefined && <em className="plate-rank">{rank}</em>}
           <i className="plate-kind">{game.genres[0] || 'Game'}</i>
+          {game.source.kind === 'wasm' && <em className="plate-runtime">WASM</em>}
           <strong className="plate-mark">{game.title}</strong>
         </span>
         <span className="plate-copy">

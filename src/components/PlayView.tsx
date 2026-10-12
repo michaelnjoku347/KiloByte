@@ -25,14 +25,23 @@ export function PlayView({
   const iframe = playUrlFor(game)
   const [copied, setCopied] = useState(false)
   const [frameError, setFrameError] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
+  const stageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (game.source.kind === 'upload') void ensureGameWorker()
   }, [game])
 
   useEffect(() => {
+    const onChange = () => setFullscreen(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
+      if (document.fullscreenElement) return
       const target = e.target
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
         return
@@ -54,6 +63,13 @@ export function PlayView({
     await navigator.clipboard.writeText(`${location.origin}${location.pathname}${toGameHash(game.id)}`)
     setCopied(true)
     flash('Game card link copied')
+  }
+
+  const toggleFullscreen = () => {
+    const el = stageRef.current
+    if (!el) return
+    if (document.fullscreenElement) void document.exitFullscreen()
+    else void el.requestFullscreen()
   }
 
   const remix = () => {
@@ -99,6 +115,11 @@ export function PlayView({
               Remix
             </button>
           )}
+          {(iframe || spec) && (
+            <button type="button" className="ghost-btn" onClick={toggleFullscreen}>
+              {fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            </button>
+          )}
           {iframe && (
             <a className="ghost-btn link-btn" href={iframe} target="_blank" rel="noreferrer">
               New tab
@@ -107,9 +128,18 @@ export function PlayView({
         </div>
       </div>
 
-      {spec && <Cabinet spec={spec} />}
-      {!spec && iframe && (
-        <RemoteFrame title={game.title} url={iframe} onFail={() => setFrameError(true)} />
+      {(spec || iframe) && (
+        <div className="stage" ref={stageRef}>
+          {fullscreen && (
+            <button type="button" className="stage-exit" onClick={toggleFullscreen}>
+              Exit fullscreen
+            </button>
+          )}
+          {spec && <Cabinet spec={spec} />}
+          {!spec && iframe && (
+            <RemoteFrame title={game.title} url={iframe} onFail={() => setFrameError(true)} />
+          )}
+        </div>
       )}
       {frameError && iframe && (
         <p className="empty">
@@ -122,6 +152,12 @@ export function PlayView({
       {spec && (
         <p className="controls-help">
           Move with arrows or WASD. Space fires, jumps, or starts. Esc leaves play.
+        </p>
+      )}
+      {!spec && (game.controls || iframe) && (
+        <p className="controls-help">
+          {game.controls ? `${game.controls} ` : ''}
+          Esc leaves play. Esc exits fullscreen first.
         </p>
       )}
     </div>
@@ -174,6 +210,7 @@ function RemoteFrame({
       <iframe
         className="game-frame"
         title={title}
+        tabIndex={0}
         src={useDirect ? url : undefined}
         srcDoc={!useDirect && srcdoc ? srcdoc : undefined}
         sandbox="allow-scripts allow-pointer-lock allow-forms allow-modals allow-same-origin allow-downloads"

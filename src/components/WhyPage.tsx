@@ -65,7 +65,15 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
           </p>
         </li>
         <li>
-          <h2>4. Dashboards are text</h2>
+          <h2>4. A few house games ship with the site</h2>
+          <p>
+            HTML pages and one C++ game compiled to WebAssembly live in this static
+            build. They are small on purpose. A heavy engine build should still be a
+            GitHub repo, played in the same frame.
+          </p>
+        </li>
+        <li>
+          <h2>5. Dashboards are text</h2>
           <p>
             Title, genres, description, ratings. Search and filter run on that text.
             A million dashboards is still cheap. A million binaries is not.

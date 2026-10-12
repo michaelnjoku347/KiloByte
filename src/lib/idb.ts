@@ -1,3 +1,5 @@
+import { publicUrl } from './base'
+
 export const IDB_NAME = 'kilobyte.bundles.v1'
 export const IDB_STORE = 'bundles'
 
@@ -56,6 +58,7 @@ export async function deleteBundle(id: string): Promise<void> {
 
 export async function ensureGameWorker(): Promise<void> {
   if (!('serviceWorker' in navigator)) return
-  await navigator.serviceWorker.register('/game-sw.js')
+  // BASE_URL (via publicUrl) keeps the worker on /kilobyte/ when njoku.dev embeds the build.
+  await navigator.serviceWorker.register(publicUrl('game-sw.js'))
   await navigator.serviceWorker.ready
 }

@@ -570,6 +570,21 @@ h2 {
   text-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
+.plate-runtime {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1a120c;
+}
+
 .plate-rank {
   position: absolute;
   right: 10px;
@@ -1207,11 +1222,67 @@ h2 {
 }
 
 .frame-shell {
+  position: relative;
   background: #000;
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid var(--line);
   min-height: 70vh;
+}
+
+.stage {
+  position: relative;
+}
+
+.stage:fullscreen,
+.stage:-webkit-full-screen {
+  background: #000;
+  width: 100%;
+  height: 100%;
+}
+
+.stage:fullscreen .frame-shell,
+.stage:fullscreen .game-frame,
+.stage:-webkit-full-screen .frame-shell,
+.stage:-webkit-full-screen .game-frame {
+  height: 100%;
+  min-height: 100%;
+  border-radius: 0;
+  border: 0;
+}
+
+.stage-exit {
+  position: absolute;
+  z-index: 5;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 0;
+  background: rgba(12, 14, 18, 0.78);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+
+.runtime-index {
+  margin-top: -12px;
+}
+
+.index-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  vertical-align: 2px;
 }
 
 .game-frame {

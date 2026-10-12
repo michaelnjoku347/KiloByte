@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 dist
+/emsdk/
 dist-ssr
 *.local
 
