@@ -61,7 +61,9 @@ await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
   buttons.find((b) => b.textContent?.trim() === 'Play this')?.click()
 })
-await page.waitForSelector('canvas, iframe.game-frame')
+await page.waitForFunction(() => location.hash.includes('/play/'))
+await page.waitForSelector('.stage-shell canvas')
+await page.waitForFunction(() => /\d+ fps/.test(document.querySelector('.stage-shell .stage-fps')?.textContent || ''))
 console.log('play ok')
 
 await page.keyboard.press('Escape')
@@ -72,7 +74,8 @@ await page.evaluate(() => {
   const buttons = [...document.querySelectorAll('button')]
   buttons.find((b) => b.textContent?.trim() === 'Play this')?.click()
 })
-await page.waitForSelector('canvas, iframe.game-frame')
+await page.waitForFunction(() => location.hash.includes('/play/'))
+await page.waitForSelector('.stage-shell canvas')
 console.log('play again ok')
 
 await page.evaluate(() => {
