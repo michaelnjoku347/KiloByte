@@ -166,6 +166,11 @@ describe('cabinet storage', () => {
     expect(lib.some((g) => g.genres.includes('Shooter'))).toBe(true)
     expect(lib.some((g) => g.genres.includes('Puzzle'))).toBe(true)
     expect(lib.some((g) => g.source.kind === 'github')).toBe(true)
+    expect(lib.some((g) => g.source.kind === 'wasm')).toBe(true)
+    expect(lib.some((g) => g.id === 'house_lantern_reach')).toBe(true)
+    expect(filterGames(lib, { query: 'wasm', genres: [], source: 'all', sort: 'title' }, new Set(), {}).map((g) => g.id)).toContain(
+      'house_kiln_rally',
+    )
     expect(featuredGame(lib)?.id).toBe('house_dock_ledger')
     expect(lib.find((g) => g.id === 'house_2048')?.rating).toBe(4.8)
     const spec = compileCart({

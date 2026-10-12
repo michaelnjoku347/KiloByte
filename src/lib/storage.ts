@@ -1,6 +1,7 @@
 import type { ArcadeSettings, ArcadeState, GameRecord, GameSpec, UserProfile } from '../types'
 import { HOUSE_CARTS, HOUSE_CART_RATINGS } from '../data/house'
 import { HOUSE_GAMES } from '../data/catalog'
+import { manifestGames } from './manifest'
 import { recordFromCart } from './record'
 import { parseTheme } from './theme'
 
@@ -126,6 +127,7 @@ export function saveState(state: ArcadeState): void {
 
 export function houseLibrary(): GameRecord[] {
   return [
+    ...manifestGames(),
     ...HOUSE_GAMES,
     ...HOUSE_CARTS.map((spec) => ({
       ...recordFromCart(spec),

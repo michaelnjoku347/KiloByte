@@ -34,7 +34,7 @@ function getBundle(id) {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
-  const match = url.pathname.match(/^\/local-game\/([^/]+)\/(.*)$/)
+  const match = url.pathname.match(/\/local-game\/([^/]+)\/(.*)$/)
   if (!match) return
   const id = decodeURIComponent(match[1])
   let path = decodeURIComponent(match[2] || 'index.html')

@@ -7,6 +7,7 @@ export const GENRE_CATALOG = [
   'Educational',
   'Horror',
   'Idle',
+  'Mashup',
   'Platformer',
   'Puzzle',
   'Racing',
