@@ -30,11 +30,11 @@ export function recordFromCart(spec: GameSpec): GameRecord {
 export function sourceKind(source: GameSource): SourceFilter {
   if (source.kind === 'github') return 'github'
   if (source.kind === 'upload') return 'upload'
-  if (source.kind === 'html' || source.kind === 'wasm') return 'house'
-  return 'cart'
+  if (source.kind === 'cart') return 'cart'
+  return 'house'
 }
 
-export function runtimeOf(game: GameRecord): 'html' | 'wasm' | 'cart' | 'github' | 'upload' {
+export function runtimeOf(game: GameRecord): 'html' | 'wasm' | 'cart' | 'github' | 'upload' | 'stage' {
   switch (game.source.kind) {
     case 'wasm':
       return 'wasm'
@@ -46,6 +46,8 @@ export function runtimeOf(game: GameRecord): 'html' | 'wasm' | 'cart' | 'github'
       return 'github'
     case 'upload':
       return 'upload'
+    case 'stage':
+      return 'stage'
   }
 }
 
@@ -61,6 +63,8 @@ export function runtimeLabel(game: GameRecord): string {
       return 'GitHub'
     case 'upload':
       return 'Upload'
+    case 'stage':
+      return 'WebGL2'
   }
 }
 
@@ -74,6 +78,8 @@ export function sourceLabel(source: GameSource): string {
       return 'On-site build'
     case 'wasm':
       return 'WebAssembly'
+    case 'stage':
+      return 'WebGL · this tab'
     default:
       return 'JSON cart'
   }

@@ -15,9 +15,9 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
         <p className="eyebrow">Launch storage</p>
         <h1>You do not host the games. You host the catalog.</h1>
         <p className="lede">
-          Kilobyte is a catalog plus a player. The expensive files live on GitHub
-          or on the maker’s machine. That is how this stays free when people publish
-          simulators, shooters, puzzles — anything.
+          Kilobyte is a cabinet for browser games. A WebGL or WebAssembly build — the kind of
+          session that can hold a 3D world at a high frame rate — plays in this tab. The heavy
+          files stay on GitHub or on the maker’s machine. This site keeps the listing.
         </p>
       </section>
 
@@ -45,9 +45,9 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
         <li>
           <h2>1. Connect a GitHub repo</h2>
           <p>
-            Creators paste <code>owner/repo</code>. We read the public API, find{' '}
-            <code>index.html</code>, and play through jsDelivr or GitHub Pages. You never
-            receive a zip.
+            Creators paste <code>owner/repo</code>. Unity, Godot, and custom WebGL exports
+            all end at an <code>index.html</code>. We play that through jsDelivr or GitHub
+            Pages. You never receive a zip.
           </p>
         </li>
         <li>
