@@ -94,7 +94,12 @@ export type CartSource = {
   spec: GameSpec
 }
 
-export type GameSource = GithubSource | HtmlSource | UploadSource | CartSource | WasmSource
+export type StageSource = {
+  kind: 'stage'
+  stage: 'cinder-field'
+}
+
+export type GameSource = GithubSource | HtmlSource | UploadSource | CartSource | WasmSource | StageSource
 
 export type GameRecord = {
   id: string

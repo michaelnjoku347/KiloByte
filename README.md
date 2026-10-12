@@ -2,7 +2,7 @@
 
 A browser game launcher. People pick a title, press Play, and the game runs in this tab. Creators publish by uploading a build or pointing at a public GitHub repo. The site itself is static: no server, no database, no paid AI proxy.
 
-House games ship with the site. That includes plain HTML canvas games and one C++ game compiled to WebAssembly. Everything else stays on GitHub or in the visitor’s browser.
+The house shelf opens on **Cinder Field**, a first-person WebGL2 range that runs in this tab, with the frame rate on screen. Behind it are plain HTML canvas games, one C++ game compiled to WebAssembly, and one-kilobyte carts. Everything else stays on GitHub or in the visitor’s browser. The same player launches a Unity, Godot, or custom export as long as the build has an `index.html`.
 
 ## Launch it
 
@@ -32,7 +32,7 @@ The launcher is a Vite + React app. Routes are hashes (`#/game/house_kiln_rally`
 | Play | Featured game, mashup shelf, search, genre chips |
 | Catalog | Ranked table, genre filter, HTML / WASM / cart filter |
 | Game page | Blurb, mashup note, controls, rating |
-| Player | iframe for HTML, GitHub, uploads, and WASM; canvas for carts; fullscreen on the frame |
+| Player | WebGL stage in this tab; iframe for HTML, GitHub, uploads, and WASM; canvas for carts; fullscreen on the frame |
 | Make | Upload a folder or zip, connect a GitHub repo, or mint a JSON cart |
 
 A packaged game is just an `index.html`. HTML5 games are a single file. WebAssembly games are the Emscripten output (`index.html`, `index.js`, `index.wasm`) opened in the same iframe. Uploads go to IndexedDB and are served by `public/game-sw.js` under `local-game/`. Paths use Vite’s `BASE_URL`, so the service worker and the game files keep working when the site is mounted at `/kilobyte/`.
@@ -96,6 +96,17 @@ Original names, code, and shapes. They are not ports, and they do not use commer
 | Kiln Rally | C++ → WASM (SDL2) | A brick-stacking workshop crossed with a bouncing puck sport |
 | Plot Puck | HTML canvas | A garden planner crossed with a table puck |
 | Lantern Reach | HTML canvas | A four-lane rhythm game crossed with a lantern-boat race |
+
+### Other ways a game gets in
+
+| Path | What you provide | Where the files live |
+| --- | --- | --- |
+| **Connect GitHub** | Title, kinds, `owner/repo`, play URL | GitHub / jsDelivr |
+| **Upload zip or HTML** | Metadata + files in the creator’s IndexedDB | The creator’s browser |
+| **WebGL stage** | The house range, in the page bundle | Nobody extra |
+| **Prompt a JSON cart** | ~1 KB recipe | Nobody |
+
+GitHub is the production path for a full web build: a WASM port, a Phaser project, a Unity or Godot export — anything with an `index.html`.
 
 ## Build a C++ game to WebAssembly
 
@@ -165,6 +176,17 @@ An iframe on any other page:
 ```
 
 GitHub Pages is the other static host. Same hash routes, with the project-page origin above. Relative `base: './'` also lets you drop `dist/` into any folder and open `index.html`.
+
+## What the cabinet does
+
+- **Play**: a live WebGL lead you can launch, then the mashup shelf and the rest of the library
+- **Catalog**: a table of every game, ranked by star rating and filterable by kind and runtime (HTML, WASM, cart)
+- Find a title from the masthead; each card has Play, Save, and “what this is”
+- **You**: optional on-device card (no account server) and Light/Dark appearance
+- Player: WebGL stage, iframe for HTML, GitHub, uploads, and WASM, canvas for carts. Esc leaves play; Esc exits fullscreen first, and Esc releases the mouse before it leaves a pointer-locked session
+- Make: Upload files/folder/zip · Inspect + publish a public repo · optional cart prompt
+- House library across a first-person WebGL range, WebAssembly and HTML mashups, Simulator, Shooter, Puzzle, Horror, Rhythm, Strategy, Racing, Idle, and arcade carts
+- Optional Gemini / GitHub tokens stay in `localStorage` on the visitor’s machine
 
 ## Scripts
 

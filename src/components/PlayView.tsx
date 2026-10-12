@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { GameRecord } from '../types'
 import { Cabinet } from './Cabinet'
+import { CinderField } from './CinderField'
 import { encodeCart, formatBytes, shareUrl } from '../lib/cart'
 import { playUrlFor, sourceLabel } from '../lib/record'
 import { remixCart } from '../lib/generate'
@@ -22,6 +23,7 @@ export function PlayView({
   flash: (message: string) => void
 }) {
   const spec = game.source.kind === 'cart' ? game.source.spec : undefined
+  const stage = game.source.kind === 'stage'
   const iframe = playUrlFor(game)
   const [copied, setCopied] = useState(false)
   const [frameError, setFrameError] = useState(false)
@@ -42,6 +44,7 @@ export function PlayView({
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       if (document.fullscreenElement) return
+      if (document.pointerLockElement) return
       const target = e.target
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
         return
@@ -80,7 +83,7 @@ export function PlayView({
   }
 
   return (
-    <div className="page play-page">
+    <div className={`page play-page${stage ? ' play-stage' : ''}`}>
       <div className="play-head">
         <button type="button" className="ghost-btn" onClick={() => go({ name: 'game', id: game.id })}>
           ← Back
@@ -115,7 +118,7 @@ export function PlayView({
               Remix
             </button>
           )}
-          {(iframe || spec) && (
+          {(iframe || spec || stage) && (
             <button type="button" className="ghost-btn" onClick={toggleFullscreen}>
               {fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
             </button>
@@ -128,7 +131,7 @@ export function PlayView({
         </div>
       </div>
 
-      {(spec || iframe) && (
+      {(spec || iframe || stage) && (
         <div className="stage" ref={stageRef}>
           {fullscreen && (
             <button type="button" className="stage-exit" onClick={toggleFullscreen}>
@@ -136,7 +139,8 @@ export function PlayView({
             </button>
           )}
           {spec && <Cabinet spec={spec} />}
-          {!spec && iframe && (
+          {stage && <CinderField mode="play" />}
+          {!spec && !stage && iframe && (
             <RemoteFrame title={game.title} url={iframe} onFail={() => setFrameError(true)} />
           )}
         </div>
@@ -154,7 +158,12 @@ export function PlayView({
           Move with arrows or WASD. Space fires, jumps, or starts. Esc leaves play.
         </p>
       )}
-      {!spec && (game.controls || iframe) && (
+      {stage && (
+        <p className="controls-help">
+          Click to look. WASD to move. Esc releases the mouse, then leaves the session.
+        </p>
+      )}
+      {!spec && !stage && (game.controls || iframe) && (
         <p className="controls-help">
           {game.controls ? `${game.controls} ` : ''}
           Esc leaves play. Esc exits fullscreen first.
