@@ -1,6 +1,8 @@
 # Kilobyte
 
-A catalog of browser games: people **pick a title**, **press Play**, and **publish** by uploading a build or connecting a GitHub repo. You do not store Unity/WebGL binaries.
+A cabinet for browser games. People **pick a title**, **launch it in the tab**, and **publish** a WebGL or HTML build by uploading files or connecting a GitHub repo. You do not store the binaries.
+
+The house shelf opens on **Cinder Field**, a first-person WebGL2 range that runs on the visitor’s GPU, with the frame rate on screen. Smaller HTML titles and one-kilobyte carts sit behind it. The same player launches a Unity, Godot, or custom export as long as the build has an `index.html`.
 
 ## Launch it
 
@@ -20,19 +22,20 @@ Visitors play for free. Creators publish for free. Your bill stays at hosting a 
 | --- | --- | --- |
 | **Connect GitHub** | Title, kinds, `owner/repo`, play URL | GitHub / jsDelivr |
 | **Upload zip or HTML** | Metadata + files in the creator’s IndexedDB | The creator’s browser |
-| **Mint a JSON cart** | ~1 KB recipe | Nobody |
+| **WebGL stage** | The house range, in the page bundle | Nobody extra |
+| **Prompt a JSON cart** | ~1 KB recipe | Nobody |
 
-GitHub is the production path for “literally any game”: a Phaser project, a puzzle, a sim, a shooter — as long as it is a web build with an `index.html`.
+GitHub is the production path for a full web build: a WASM port, a Phaser project, a Unity or Godot export — anything with an `index.html`.
 
 ## Product
 
-- **Play**: featured game, star ratings, wrapping grid of covers
+- **Play**: a live WebGL lead you can launch, then the rest of the shelf
 - **Catalog**: a table of every game, ranked by star rating and filterable by kind
 - Find a title from the masthead; each card has Play, Save, and “what this is”
 - **You**: optional on-device card (no account server) and Light/Dark appearance
-- Player: iframe for HTML/GitHub, built-in engine for carts
-- Make: Upload files/folder/zip · Inspect + publish a public repo · optional cart mint
-- House library across Simulator, Shooter, Puzzle, Horror, Rhythm, Strategy, Racing, Idle, and arcade carts
+- Player: WebGL stage, iframe for HTML/GitHub, built-in engine for carts. Esc leaves play
+- Make: Upload files/folder/zip · Inspect + publish a public repo · optional cart prompt
+- House library across a first-person WebGL range, Simulator, Shooter, Puzzle, Horror, Rhythm, Strategy, Racing, Idle, and arcade carts
 - Optional Gemini / GitHub tokens stay in `localStorage` on the visitor’s machine
 
 ## Scripts
