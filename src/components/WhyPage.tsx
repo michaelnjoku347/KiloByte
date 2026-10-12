@@ -17,7 +17,9 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
         <p className="lede">
           Kilobyte is a cabinet for browser games. A WebGL or WebAssembly build — the kind of
           session that can hold a 3D world at a high frame rate — plays in this tab. The heavy
-          files stay on GitHub or on the maker’s machine. This site keeps the listing.
+          files stay on GitHub or on the maker’s machine. This site keeps the listing. A free
+          Supabase bucket can store a creator’s web export after they sign in. It is off until
+          those keys exist.
         </p>
       </section>
 
@@ -85,8 +87,9 @@ export function WhyPage({ carts }: { carts: GameRecord[] }) {
         <h2>How to launch this site</h2>
         <p>
           This is a static Vite app. Build it and put <code>dist/</code> on GitHub Pages
-          or Cloudflare Pages. No API keys required for the public catalog. Optional
-          Gemini and GitHub tokens are typed by the visitor and stored locally.
+          or Cloudflare Pages. No API keys required for the public catalog. A Gemini key, if you
+          add one, lives only on the Supabase studio function. A GitHub token is optional and stays
+          in this browser.
         </p>
         <div className="hero-actions">
           <button type="button" className="primary-btn" onClick={() => go({ name: 'create', tab: 'github' })}>
