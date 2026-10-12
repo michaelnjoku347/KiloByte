@@ -101,6 +101,10 @@ export type StageSource = {
 
 export type GameSource = GithubSource | HtmlSource | UploadSource | CartSource | WasmSource | StageSource
 
+export type AgeRating = 'all' | '10' | '13' | '16'
+
+export type WebEngine = 'unity' | 'godot' | 'emscripten' | 'rust' | 'go' | 'bevy' | 'javascript'
+
 export type GameRecord = {
   id: string
   title: string
@@ -110,6 +114,9 @@ export type GameRecord = {
   genres: string[]
   createdAt: string
   cover: string
+  art?: string
+  age?: AgeRating
+  engine?: WebEngine
   palette: Pick<Palette, 'bg' | 'paper' | 'accent'>
   house?: boolean
   bytes: number

@@ -15,7 +15,10 @@ describe('game manifest', () => {
     expect(kiln?.genres).toContain('Mashup')
     expect(kiln?.mashup).toMatch(/puck/i)
     expect(kiln?.source.kind === 'wasm' ? kiln.source.href : '').toMatch(/games\/kiln-rally\/index\.html$/)
+    expect(kiln?.art).toBe('covers/kiln-rally-cover.jpg')
     expect(games.filter((g) => g.genres.includes('Mashup'))).toHaveLength(3)
+    expect(games.find((g) => g.id === 'house_night_clerk')?.age).toBe('13')
+    expect(games.find((g) => g.id === 'house_dock_ledger')?.age).toBe('all')
   })
 
   it('skips a broken entry and keeps the valid one', () => {

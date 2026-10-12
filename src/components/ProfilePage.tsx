@@ -4,6 +4,7 @@ import { shownRating } from '../lib/catalog'
 import { GameCard } from './GameCard'
 import { go } from '../lib/route'
 import { hasPassphrase, initialsFrom } from '../lib/profile'
+import { cloudClient, readCloudConfig } from '../lib/cloud'
 
 export function ProfilePage({
   signedIn,
@@ -44,12 +45,14 @@ export function ProfilePage({
         <p className="eyebrow">You</p>
         <h1>{signedIn && profile ? profile.displayName : 'Your card'}</h1>
         <p className="lede">
-          Play as a guest, or make an optional card on this browser. There is no Kilobyte account
-          server — the catalog stays a static site.
+          Play as a guest, or make an optional card on this browser. Cloud accounts, uploads, ratings,
+          and lobbies turn on only after a free Supabase project is configured. Until then everything
+          stays on this device.
         </p>
       </section>
 
       <AppearancePanel theme={theme} onTheme={onTheme} />
+      <CloudAccount />
 
       {signedIn && profile ? (
         <SignedInCard
@@ -70,6 +73,73 @@ export function ProfilePage({
         <GuestSplit onSignUp={onSignUp} />
       )}
     </div>
+  )
+}
+
+function CloudAccount() {
+  const configured = readCloudConfig() !== null
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [note, setNote] = useState('')
+
+  if (!configured) {
+    return (
+      <section className="panel">
+        <h2>Cloud account</h2>
+        <p>
+          Off. Ratings, favorites, play counts, leaderboards, creator uploads, and lobbies stay on this
+          browser. The README lists the free Supabase project and the Gemini secret. No key is built
+          into this page.
+        </p>
+      </section>
+    )
+  }
+
+  const submit = async (mode: 'up' | 'in') => {
+    const pending = cloudClient()
+    if (!pending) return
+    const client = await pending
+    const result =
+      mode === 'up'
+        ? await client.auth.signUp({ email, password })
+        : await client.auth.signInWithPassword({ email, password })
+    if (result.error) {
+      setNote(result.error.message)
+      return
+    }
+    const session = await client.auth.getSession()
+    const id = session.data.session?.user.id
+    if (!id) {
+      setNote('Check the confirmation email, then sign in. The project may require that before a session exists.')
+      return
+    }
+    const handle = email.split('@')[0].replace(/[^a-z0-9]/gi, '').slice(0, 24) || 'player'
+    const saved = await client.from('profiles').upsert({ id, handle, display_name: handle, bio: '' })
+    setNote(saved.error ? saved.error.message : `Signed in as ${handle}.`)
+  }
+
+  return (
+    <section className="panel">
+      <h2>Cloud account</h2>
+      <p>Email and password go to your Supabase project. The anon key is public. Row Level Security limits each row to its owner.</p>
+      <label className="field">
+        <span>Email</span>
+        <input value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+      </label>
+      <label className="field">
+        <span>Password</span>
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+      </label>
+      <div className="hero-actions">
+        <button type="button" className="primary-btn" onClick={() => void submit('up')}>
+          Create cloud account
+        </button>
+        <button type="button" className="ghost-btn" onClick={() => void submit('in')}>
+          Sign in
+        </button>
+      </div>
+      {note && <p className="meter-line">{note}</p>}
+    </section>
   )
 }
 

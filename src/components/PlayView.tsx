@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { GameRecord } from '../types'
 import { Cabinet } from './Cabinet'
-import { CinderField } from './CinderField'
+import { LobbyPanel } from './LobbyPanel'
+
+const CinderField = lazy(() => import('./CinderField').then((mod) => ({ default: mod.CinderField })))
 import { encodeCart, formatBytes, shareUrl } from '../lib/cart'
 import { playUrlFor, sourceLabel } from '../lib/record'
 import { remixCart } from '../lib/generate'
@@ -139,7 +141,11 @@ export function PlayView({
             </button>
           )}
           {spec && <Cabinet spec={spec} />}
-          {stage && <CinderField mode="play" />}
+          {stage && (
+            <Suspense fallback={<div className="stage-shell" aria-busy="true" />}>
+              <CinderField mode="play" />
+            </Suspense>
+          )}
           {!spec && !stage && iframe && (
             <RemoteFrame title={game.title} url={iframe} onFail={() => setFrameError(true)} />
           )}
@@ -160,9 +166,10 @@ export function PlayView({
       )}
       {stage && (
         <p className="controls-help">
-          Click to look. WASD to move. Esc releases the mouse, then leaves the session.
+          Click to look. WASD moves, Shift sprints. Mouse aims. Click or Space fires. 1 carbine, 2 shotgun, R reloads. Esc releases the mouse, then leaves the session.
         </p>
       )}
+      {stage && <LobbyPanel />}
       {!spec && !stage && (game.controls || iframe) && (
         <p className="controls-help">
           {game.controls ? `${game.controls} ` : ''}

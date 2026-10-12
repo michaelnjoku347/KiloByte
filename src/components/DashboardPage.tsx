@@ -1,6 +1,9 @@
 import type { GameRecord } from '../types'
 import { formatBytes } from '../lib/cart'
 import { similarGames, shownRating } from '../lib/catalog'
+import { ageLabel } from '../lib/age'
+import { publicUrl } from '../lib/base'
+import { ENGINE_LABEL } from '../lib/engines'
 import { playUrlFor, runtimeLabel, sourceLabel } from '../lib/record'
 import { go } from '../lib/route'
 import { livePointer } from '../lib/pointer'
@@ -57,6 +60,7 @@ export function DashboardPage({
           style={{ background: `linear-gradient(168deg, ${game.palette.bg}, ${game.cover})` }}
           {...livePointer}
         >
+          {game.art && <img className="dossier-art" src={publicUrl(game.art)} alt="" />}
           <i>{game.genres[0] || 'Game'}</i>
           <span>{game.title}</span>
         </div>
@@ -116,6 +120,16 @@ export function DashboardPage({
             <dt>Runtime</dt>
             <dd>{runtimeLabel(game)}</dd>
           </div>
+          <div>
+            <dt>Age</dt>
+            <dd>{ageLabel(game.age)}</dd>
+          </div>
+          {game.engine && (
+            <div>
+              <dt>Engine</dt>
+              <dd>{ENGINE_LABEL[game.engine]}</dd>
+            </div>
+          )}
           {game.mashup && (
             <div>
               <dt>Mashup</dt>

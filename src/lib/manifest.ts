@@ -1,4 +1,4 @@
-import type { GameRecord, WasmSource, HtmlSource } from '../types'
+import type { AgeRating, GameRecord, WasmSource, HtmlSource } from '../types'
 import manifestJson from '../../public/games/manifest.json'
 import { publicUrl } from './base'
 
@@ -72,6 +72,8 @@ export function parseEntry(item: unknown): GameRecord | undefined {
       : { kind: 'html', entry, href }
   const rating = typeof item.rating === 'number' && Number.isFinite(item.rating) ? item.rating : 0
   const bytes = typeof item.bytes === 'number' && Number.isFinite(item.bytes) ? item.bytes : 0
+  const age: AgeRating = item.age === '10' || item.age === '13' || item.age === '16' || item.age === 'all' ? item.age : 'all'
+  const art = str(item.art)
   return {
     id,
     title,
@@ -83,6 +85,8 @@ export function parseEntry(item: unknown): GameRecord | undefined {
     genres: genres.length ? genres : ['Arcade'],
     createdAt,
     cover,
+    art,
+    age,
     palette: { bg, paper, accent },
     house: true,
     bytes,

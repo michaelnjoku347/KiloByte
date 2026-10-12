@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react'
 import type { GameRecord } from '../types'
+import { ageLabel } from '../lib/age'
+import { publicUrl } from '../lib/base'
 import { go } from '../lib/route'
 import { livePointer } from '../lib/pointer'
 import { StarRating } from './StarRating'
@@ -33,8 +35,10 @@ export function GameCard({
           }}
           {...livePointer}
         >
+          {game.art && <img className="plate-art" src={publicUrl(game.art)} alt="" />}
           {rank !== undefined && <em className="plate-rank">{rank}</em>}
           <i className="plate-kind">{game.genres[0] || 'Game'}</i>
+          <em className="age-pill">{ageLabel(game.age)}</em>
           {game.source.kind === 'wasm' && <em className="plate-runtime">WASM</em>}
           <strong className="plate-mark">{game.title}</strong>
         </span>

@@ -12,6 +12,7 @@ import { recordFromCart } from '../lib/record'
 import { deleteBundle, saveBundle } from '../lib/idb'
 import type { BundleFile } from '../lib/bundle'
 import { bundleBytes, bundleToRecord } from '../lib/bundle'
+import { cloudClient } from '../lib/cloud'
 import {
   checkPassphrase,
   hasPassphrase,
@@ -58,7 +59,44 @@ export function useCatalog() {
   const mineIds = useMemo(() => new Set(games.map((g) => g.id)), [games])
 
   const publish = async (game: GameRecord, files?: BundleFile[]) => {
-    if (files?.length) await saveBundle(game.id, bundleToRecord(files))
+    if (files?.length) {
+      await saveBundle(game.id, bundleToRecord(files))
+      const pending = cloudClient()
+      if (pending) {
+        try {
+          const client = await pending
+          const session = await client.auth.getSession()
+          const uid = session.data.session?.user.id
+          if (uid) {
+            for (const file of files.slice(0, 80)) {
+              const { error } = await client.storage.from('games').upload(`${uid}/${game.id}/${file.path}`, file.data, {
+                contentType: file.type || 'application/octet-stream',
+                upsert: true,
+              })
+              if (error) throw new Error(error.message)
+            }
+            await client.from('games').insert({
+              id: game.id,
+              owner: uid,
+              title: game.title,
+              blurb: game.blurb,
+              description: game.description,
+              genres: game.genres,
+              age: game.age ?? 'all',
+              engine: game.engine ?? 'javascript',
+              bytes: bundleBytes(files),
+            })
+            flash(`Published ${game.title} on this device and in the free bucket`)
+            setGames((list) => upsertGame(list, { ...game, bytes: bundleBytes(files) }))
+            return
+          }
+        } catch (err) {
+          setGames((list) => upsertGame(list, { ...game, bytes: bundleBytes(files) }))
+          flash(err instanceof Error ? `${err.message} Saved on this device anyway.` : 'Cloud copy failed. Saved on this device.')
+          return
+        }
+      }
+    }
     setGames((list) => upsertGame(list, files ? { ...game, bytes: bundleBytes(files) } : game))
     flash(`Published ${game.title}`)
   }

@@ -125,12 +125,22 @@ export function saveState(state: ArcadeState): void {
   )
 }
 
+const CART_ART: Record<string, string> = {
+  house_star_nibbler: 'covers/star-nibbler-cover.jpg',
+  house_brick_lantern: 'covers/brick-lantern-cover.jpg',
+  house_moss_run: 'covers/moss-run-cover.jpg',
+  house_neon_rain: 'covers/neon-rain-cover.jpg',
+  house_coil: 'covers/coil-cover.jpg',
+  house_last_buoy: 'covers/last-buoy-cover.jpg',
+}
+
 export function houseLibrary(): GameRecord[] {
   return [
     ...manifestGames(),
     ...HOUSE_GAMES,
     ...HOUSE_CARTS.map((spec) => ({
       ...recordFromCart(spec),
+      art: CART_ART[spec.id],
       rating: HOUSE_CART_RATINGS[spec.id] ?? 0,
     })),
   ]

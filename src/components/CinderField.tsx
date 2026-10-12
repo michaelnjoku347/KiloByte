@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   cameraRig,
   createYard,
+  fillBodyMesh,
   fillEmberMesh,
   lookAt,
   multiply,
@@ -9,8 +10,12 @@ import {
   playerStart,
   SHARD_COUNT,
   stepPlayer,
+  type BodyDraw,
   type Player,
 } from '../lib/cinder'
+import { saveScore, type ScoreRow } from '../lib/board'
+import { clockLabel, createMatch, emptyInput, stepMatch, touchEmbers, WEAPONS, type MatchState, type WeaponId } from '../lib/match'
+import { playMatchEvent, unlockAudio } from '../lib/sfx'
 
 const VERT = `#version 300 es
 layout(location = 0) in vec3 aPos;
@@ -55,9 +60,17 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
   const shellRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fpsRef = useRef<HTMLSpanElement>(null)
+  const hpRef = useRef<HTMLSpanElement>(null)
+  const ammoRef = useRef<HTMLSpanElement>(null)
+  const scoreRef = useRef<HTMLSpanElement>(null)
+  const clockRef = useRef<HTMLSpanElement>(null)
+  const weaponRef = useRef<HTMLSpanElement>(null)
+  const resetRef = useRef(false)
   const [found, setFound] = useState(0)
   const [locked, setLocked] = useState(false)
   const [full, setFull] = useState(false)
+  const [winner, setWinner] = useState('')
+  const [board, setBoard] = useState<ScoreRow[]>([])
   const play = mode === 'play'
 
   useEffect(() => {
@@ -143,15 +156,35 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
     gl.enableVertexAttribArray(1)
     gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0)
 
+    const bodySlots = 6
+    const bodyPosData = new Float32Array(bodySlots * 36 * 3)
+    const bodyColData = new Float32Array(bodySlots * 36 * 3)
+    const bodyVao = gl.createVertexArray()
+    gl.bindVertexArray(bodyVao)
+    const bodyPos = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, bodyPos)
+    gl.bufferData(gl.ARRAY_BUFFER, bodyPosData.byteLength, gl.DYNAMIC_DRAW)
+    gl.enableVertexAttribArray(0)
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0)
+    const bodyCol = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, bodyCol)
+    gl.bufferData(gl.ARRAY_BUFFER, bodyColData.byteLength, gl.DYNAMIC_DRAW)
+    gl.enableVertexAttribArray(1)
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0)
+
     gl.enable(gl.DEPTH_TEST)
     gl.enable(gl.CULL_FACE)
     gl.clearColor(FOG[0], FOG[1], FOG[2], 1)
 
     const keys = new Set<string>()
+    const mouse = { down: false }
     const look = { x: 0, y: 0 }
     let player: Player = playerStart()
     let collected = yard.shards.map(() => false)
     let foundCount = 0
+    let match: MatchState = createMatch()
+    let ended = false
+    let stepClock = 0
     let last = performance.now()
     let smooth = 60
     let frame = 0
@@ -186,9 +219,25 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
       look.x += event.movementX * 0.0022
       look.y += event.movementY * 0.0022
     }
+    const mouseDown = (event: MouseEvent) => {
+      if (event.button === 0) mouse.down = true
+    }
+    const mouseUp = (event: MouseEvent) => {
+      if (event.button === 0) mouse.down = false
+    }
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
     window.addEventListener('mousemove', move)
+    window.addEventListener('mousedown', mouseDown)
+    window.addEventListener('mouseup', mouseUp)
+
+    const paintHud = (youWeapon: WeaponId, youMag: number, youReserve: number, hp: number, score: number, time: number) => {
+      if (hpRef.current) hpRef.current.textContent = String(Math.max(0, Math.ceil(hp)))
+      if (ammoRef.current) ammoRef.current.textContent = `${youMag} / ${youReserve}`
+      if (scoreRef.current) scoreRef.current.textContent = String(score)
+      if (clockRef.current) clockRef.current.textContent = clockLabel(time)
+      if (weaponRef.current) weaponRef.current.textContent = youWeapon === 'shotgun' ? 'Shotgun' : 'Carbine'
+    }
 
     const draw = (now: number) => {
       if (!alive) return
@@ -197,25 +246,61 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
       smooth = smooth * 0.9 + (1 / Math.max(dt, 1 / 480)) * 0.1
       if (fpsRef.current) fpsRef.current.textContent = `${Math.round(smooth)} fps`
       if (play) {
+        if (resetRef.current) {
+          resetRef.current = false
+          match = createMatch()
+          ended = false
+          collected = yard.shards.map(() => false)
+          setWinner('')
+          setFound(0)
+          foundCount = 0
+        }
+        const weapon: WeaponId | null = keys.has('2') ? 'shotgun' : keys.has('1') ? 'carbine' : null
         const forward = (keys.has('w') || keys.has('arrowup') ? 1 : 0) - (keys.has('s') || keys.has('arrowdown') ? 1 : 0)
         const strafe = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0)
-        const stepped = stepPlayer(
-          player,
-          yard,
-          { forward, strafe, lookX: look.x, lookY: look.y },
+        match = stepMatch(
+          match,
+          yard.solids,
+          {
+            ...emptyInput(),
+            forward,
+            strafe,
+            lookX: look.x,
+            lookY: look.y,
+            fire: mouse.down || keys.has(' '),
+            reload: keys.has('r'),
+            weapon,
+            sprint: keys.has('shift'),
+          },
           dt,
-          collected,
         )
         look.x = 0
         look.y = 0
-        player = stepped.player
-        collected = stepped.collected
+        const you = match.fighters[0]
+        collected = touchEmbers(you, yard.shards, collected)
         const nextFound = collected.filter(Boolean).length
         if (nextFound !== foundCount) {
           foundCount = nextFound
           setFound(nextFound)
         }
+        player = { x: you.x, y: 1.62, z: you.z, yaw: you.yaw, pitch: match.pitch }
+        for (const event of match.events) playMatchEvent(event)
+        if (forward !== 0 || strafe !== 0) {
+          stepClock += dt
+          if (stepClock > 0.42) {
+            playMatchEvent('step')
+            stepClock = 0
+          }
+        }
+        paintHud(you.weapon, you.mags[you.weapon], you.reserves[you.weapon], you.hp, you.score, match.time)
+        if (match.over && !ended) {
+          ended = true
+          setBoard(saveScore('You', match.fighters[0].score))
+          setWinner(match.winner || 'Draw')
+        }
       } else if (!reduced) {
+        const stepped = stepPlayer(player, yard, { forward: 0, strafe: 0, lookX: 0, lookY: 0 }, dt, collected)
+        player = stepped.player
         previewTime += dt
       }
       const rig = cameraRig(player, reduced ? 1.2 : play ? 0 : previewTime, !play)
@@ -226,6 +311,19 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, emberPosData.subarray(0, emberCount * 3))
       gl.bindBuffer(gl.ARRAY_BUFFER, emberCol)
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, emberColData.subarray(0, emberCount * 3))
+      let bodyCount = 0
+      if (play) {
+        const you = match.fighters[0]
+        const bodies: BodyDraw[] = match.fighters
+          .filter((body) => body.bot && body.hp > 0 && body.respawn <= 0)
+          .map((body) => ({ x: body.x, z: body.z, yaw: body.yaw, rgb: body.rgb, kind: 'body' }))
+        bodies.push({ x: you.x, z: you.z, yaw: you.yaw, rgb: [0.18, 0.18, 0.2], kind: 'gun' })
+        bodyCount = fillBodyMesh(bodies, bodyPosData, bodyColData)
+        gl.bindBuffer(gl.ARRAY_BUFFER, bodyPos)
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, bodyPosData.subarray(0, bodyCount * 3))
+        gl.bindBuffer(gl.ARRAY_BUFFER, bodyCol)
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, bodyColData.subarray(0, bodyCount * 3))
+      }
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
       gl.useProgram(program)
       gl.uniformMatrix4fv(uMvp, false, mvp)
@@ -236,6 +334,10 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
       if (emberCount > 0) {
         gl.bindVertexArray(emberVao)
         gl.drawArrays(gl.TRIANGLES, 0, emberCount)
+      }
+      if (bodyCount > 0) {
+        gl.bindVertexArray(bodyVao)
+        gl.drawArrays(gl.TRIANGLES, 0, bodyCount)
       }
       frame = requestAnimationFrame(draw)
     }
@@ -248,6 +350,8 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
       window.removeEventListener('mousemove', move)
+      window.removeEventListener('mousedown', mouseDown)
+      window.removeEventListener('mouseup', mouseUp)
       gl.deleteProgram(program)
       gl.deleteShader(vs)
       gl.deleteShader(fs)
@@ -255,8 +359,11 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
       gl.deleteBuffer(worldCol)
       gl.deleteBuffer(emberPos)
       gl.deleteBuffer(emberCol)
+      gl.deleteBuffer(bodyPos)
+      gl.deleteBuffer(bodyCol)
       gl.deleteVertexArray(worldVao)
       gl.deleteVertexArray(emberVao)
+      gl.deleteVertexArray(bodyVao)
     }
   }, [play])
 
@@ -272,6 +379,7 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
   }, [])
 
   const lookIn = () => {
+    unlockAudio()
     const canvas = canvasRef.current
     if (!canvas) return
     void canvas.requestPointerLock()
@@ -287,7 +395,7 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
         <>
           <div className="stage-hud">
             <span>
-              {found === SHARD_COUNT ? 'Yard clear' : `${found} / ${SHARD_COUNT} embers`}
+              {found === SHARD_COUNT ? 'Embers clear' : `${found} embers`}
             </span>
             <button
               type="button"
@@ -302,11 +410,43 @@ export function CinderField({ mode }: { mode: 'play' | 'preview' }) {
               {full ? 'Window' : 'Fullscreen'}
             </button>
           </div>
+          <div className="match-hud" aria-live="polite">
+            <span ref={hpRef}>100</span>
+            <span ref={weaponRef}>Carbine</span>
+            <span ref={ammoRef}>{`${WEAPONS.carbine.mag} / ${WEAPONS.carbine.reserve}`}</span>
+            <span ref={scoreRef}>0</span>
+            <span ref={clockRef}>3:00</span>
+          </div>
           <div className="stage-crosshair" aria-hidden />
-          {!locked && (
+          {!locked && !winner && (
             <button type="button" className="stage-gate" onClick={lookIn}>
               Click to look
+              <small>WASD moves. Mouse aims. Click or Space fires. 1 carbine, 2 shotgun, R reloads. First to 8.</small>
             </button>
+          )}
+          {winner && (
+            <div className="match-end">
+              <p>{winner === 'You' ? 'You held the yard.' : `${winner} held the yard.`}</p>
+              {board.length > 0 && (
+                <ol>
+                  {board.slice(0, 3).map((row) => (
+                    <li key={row.at}>
+                      {row.score} {row.name}
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={() => {
+                  resetRef.current = true
+                  setWinner('')
+                }}
+              >
+                Rematch
+              </button>
+            </div>
           )}
         </>
       )}

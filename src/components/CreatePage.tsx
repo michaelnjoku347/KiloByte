@@ -3,7 +3,11 @@ import type { ArcadeSettings, CreateTab, GameRecord, GameSpec } from '../types'
 import type { BundleFile } from '../lib/bundle'
 import type { GithubInspect } from '../lib/github'
 import { compileCart } from '../lib/generate'
-import { composeWithGemini } from '../lib/gemini'
+import { callStudio, readCloudConfig } from '../lib/cloud'
+import { allowAction } from '../lib/limits'
+import { ENGINE_LABEL, inspectBundle } from '../lib/engines'
+import { mashupIdeas } from '../lib/recommend'
+import type { AgeRating, WebEngine } from '../types'
 import { cartBytes, encodeCart, formatBytes, shareUrl } from '../lib/cart'
 import { inspectGithub, jsdelivrUrl } from '../lib/github'
 import { bundleBytes, filesFromList, findEntry } from '../lib/bundle'
@@ -139,19 +143,30 @@ function UploadForm({
   const [genres, setGenres] = useState<string[]>(['Arcade'])
   const [files, setFiles] = useState<BundleFile[]>([])
   const [entry, setEntry] = useState('index.html')
+  const [engine, setEngine] = useState<WebEngine | null>(null)
+  const [age, setAge] = useState<AgeRating>('all')
   const [busy, setBusy] = useState(false)
+  const [lastSlot, setLastSlot] = useState(0)
 
   const ingest = async (list: File[]) => {
+    const gate = allowAction(Date.now(), lastSlot)
+    if (!gate.ok) {
+      flash(`Wait ${Math.ceil(gate.waitMs / 1000)}s before another upload.`)
+      return
+    }
     try {
       const next = await filesFromList(list)
       const found = findEntry(next.map((f) => f.path))
+      const report = inspectBundle(next)
       setFiles(next)
       setEntry(found)
+      setEngine(report.engine)
+      setLastSlot(Date.now())
       if (!title.trim()) {
         const hint = list[0]?.name.replace(/\.(zip|html)$/i, '') ?? 'Untitled'
         setTitle(hint)
       }
-      flash(`${next.length} files · entry ${found}`)
+      flash(`${ENGINE_LABEL[report.engine]} · ${next.length} files · ${found}`)
     } catch (err) {
       flash(err instanceof Error ? err.message : 'Could not read those files')
     }
@@ -176,6 +191,8 @@ function UploadForm({
           createdAt: new Date().toISOString(),
           cover: '#e85d3a',
           palette: { bg: '#221910', paper: '#f3ead7', accent: '#e85d3a' },
+          age,
+          engine: engine ?? 'javascript',
           bytes: bundleBytes(files),
           rating: 0,
           source: { kind: 'upload', entry },
@@ -203,7 +220,10 @@ function UploadForm({
           }}
         >
           <strong>Drop a zip, index.html, or a whole folder</strong>
-          <p>HTML, JS, CSS, images, audio. 25 MB max. Played from this browser via IndexedDB.</p>
+          <p>
+            Unity WebGL, Godot, Emscripten, Rust, Go, Bevy, or plain JS. 40 MB max. Blocked installers stay out.
+            Files play from this browser. A free Supabase bucket receives a copy only after you sign in.
+          </p>
           <label className="primary-btn file-btn">
             Choose files
             <input
@@ -237,7 +257,7 @@ function UploadForm({
         {files.length > 0 && (
           <div className="file-list">
             <p className="meter-line">
-              {files.length} files · {formatBytes(bundleBytes(files))} · entry {entry}
+              {files.length} files · {formatBytes(bundleBytes(files))} · {engine ? ENGINE_LABEL[engine] : 'build'} · entry {entry}
             </p>
             <ul>
               {files.slice(0, 8).map((f) => (
@@ -261,7 +281,40 @@ function UploadForm({
           <span>Description</span>
           <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
+        <label className="field">
+          <span>Age tag</span>
+          <select value={age} onChange={(e) => setAge(e.target.value as AgeRating)}>
+            <option value="all">Everyone</option>
+            <option value="10">10+</option>
+            <option value="13">13+</option>
+            <option value="16">16+</option>
+          </select>
+        </label>
         <GenrePicker value={genres} onChange={setGenres} />
+        <button
+          type="button"
+          className="ghost-btn"
+          onClick={() => {
+            if (!readCloudConfig()) {
+              flash('Descriptions from a model need the studio function and GEMINI_API_KEY. Write the blurb here, or keep going without it.')
+              return
+            }
+            void callStudio({ action: 'describe', title: title || 'Untitled' })
+              .then((data) => {
+                const row = data as { blurb?: string; description?: string; error?: string }
+                if (row.error) {
+                  flash(row.error)
+                  return
+                }
+                if (row.blurb) setBlurb(row.blurb)
+                if (row.description) setDescription(row.description)
+                flash('Studio wrote the listing')
+              })
+              .catch((err) => flash(err instanceof Error ? err.message : 'Studio unavailable'))
+          }}
+        >
+          Ask the studio for a blurb
+        </button>
         <button type="button" className="primary-btn" disabled={busy} onClick={() => void publish()}>
           {busy ? 'Publishing…' : 'Publish to arcade'}
         </button>
@@ -432,23 +485,34 @@ function GenerateForm({
   flash: (message: string) => void
 }) {
   const [prompt, setPrompt] = useState('a neon snake in a candy factory')
-  const [useModel, setUseModel] = useState(false)
   const [busy, setBusy] = useState(false)
   const [spec, setSpec] = useState<GameSpec | null>(null)
+  const ideas = mashupIdeas(prompt)
 
   const mint = async () => {
     setBusy(true)
     try {
-      if (useModel && settings.geminiKey.trim()) {
-        try {
-          setSpec(await composeWithGemini(prompt, settings.author, settings.geminiKey))
-          flash('Model wrote the cart')
-          return
-        } catch {
-          flash('Model failed — used the on-device composer')
-        }
-      }
       setSpec(compileCart({ prompt, author: settings.author }))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const askStudio = async () => {
+    if (!readCloudConfig()) {
+      flash('Studio ideas need the free Supabase function and GEMINI_API_KEY. The pitches below were written on this device.')
+      return
+    }
+    setBusy(true)
+    try {
+      const data = (await callStudio({ action: 'ideas', prompt })) as { error?: string; ideas?: { title: string; pitch: string }[] }
+      if (data.error) {
+        flash(data.error)
+        return
+      }
+      flash(data.ideas?.[0]?.title ? `Studio: ${data.ideas[0].title}` : 'Studio answered')
+    } catch (err) {
+      flash(err instanceof Error ? err.message : 'Studio unavailable')
     } finally {
       setBusy(false)
     }
@@ -462,25 +526,22 @@ function GenerateForm({
           <span>Describe a cart-sized game</span>
           <textarea rows={5} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
         </label>
-        <label className="check">
-          <input type="checkbox" checked={useModel} onChange={(e) => setUseModel(e.target.checked)} />
-          Try Gemini with my key
-        </label>
-        {useModel && (
-          <label className="field">
-            <span>Gemini key</span>
-            <input
-              type="password"
-              value={settings.geminiKey}
-              onChange={(e) => onSettings({ ...settings, geminiKey: e.target.value })}
-            />
-          </label>
-        )}
+        <button type="button" className="ghost-btn" disabled={busy} onClick={() => void askStudio()}>
+          Ask the studio
+        </button>
         <button type="button" className="primary-btn" disabled={busy} onClick={() => void mint()}>
           {busy ? 'Making…' : 'Make cart'}
         </button>
       </section>
       <section className="panel recipe">
+        <div className="idea-list">
+          <p className="eyebrow">Mashup desk · on this device</p>
+          {ideas.map((idea) => (
+            <p key={idea.title}>
+              <strong>{idea.title}</strong> {idea.pitch}
+            </p>
+          ))}
+        </div>
         {!spec && <p className="empty">Carts are tiny arcade recipes. Use Upload or GitHub for full games.</p>}
         {spec && (
           <>

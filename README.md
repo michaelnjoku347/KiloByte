@@ -202,4 +202,52 @@ npm run smoke          # needs the dev server on :5173
 
 Write your own code and draw your own shapes. Do not drop in commercial sprites, names, or decompiled game code. 2048 is linked, not vendored; it is Gabriele Cirulli’s MIT-licensed project. Mashup blurbs describe the idea in original words.
 
-Optional Gemini and GitHub tokens, if a visitor types them under Make, stay in `localStorage` on that machine.
+A GitHub token, if a visitor types one under Make, stays in `localStorage` on that machine. Platform model calls do not use that field.
+
+## What works with zero accounts
+
+- The store, age tags, house games, Kiln Rally, and Cinder Field versus bots.
+- Uploads stay in IndexedDB on that browser, with engine detection and a 40 MB cap.
+- “For you” and the mashup desk are on-device. They are not labeled as a model.
+- After one online visit, the production service worker caches the shell so the match can open offline. `localhost` is not cached, so Vite keeps working.
+
+## Creator uploads
+
+Drop a zip or folder that contains `index.html`. Kilobyte rejects `..` paths and installer types (`.exe`, `.dll`, `.sh`, `.php`, and similar). It names the engine from the files:
+
+| Export | What it looks for |
+| --- | --- |
+| Unity WebGL | `createUnityInstance`, `unity-canvas`, or a `.unityweb` file |
+| Godot HTML5 | `Godot` in the scripts, or a `.pck` |
+| Emscripten C/C++ | `emscripten`, or a `.wasm` that is not one of the engines below |
+| Rust wasm-bindgen | `wasm_bindgen` |
+| Go wasm | `wasm_exec.js` |
+| Bevy | `bevy_render` or `bevy_ecs` |
+| Plain JS | an HTML entry and none of the above |
+
+Builds over 40 MB should be a public GitHub repo (Make → Connect GitHub). That path does not copy the files onto Kilobyte.
+
+Godot threads need cross-origin isolation headers. GitHub Pages does not send them. Export with threads off, or host the build where you can set `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`.
+
+## Cinder Field
+
+The lead game is an original WebGL2 match on the yard that already shipped: cover, a carbine, a shotgun, three rivals, ember pickups that heal, procedural sound, a match clock, and a local top-score list. First to 8, or the clock. It is tagged 16+. Versus bots does not need an account. Online play is the lobby panel, and it stays honest when Supabase is not configured.
+
+## Accounts and keys Michael has to create
+
+Nothing is required to play or to publish on one browser. These are the free-tier pieces, and the app does not pretend they are on.
+
+1. **Supabase** (free project). In the project settings, copy the project URL and the **anon** key into `.env.local` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, then rebuild. The anon key is public. Do not put the service role key in Vite.
+2. In the Supabase SQL editor, run `supabase/migrations/20261012_init.sql`. That creates profiles, games, ratings, plays, favorites, scores, lobbies, and client error rows, with row level security.
+3. Create a storage bucket named `games`. The migration’s storage policies let a signed-in user write only inside their own folder, and let anyone read.
+4. Install the Supabase CLI, then deploy `supabase/functions/studio`. Set the function secret `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/) (free tier). That key never ships in the browser bundle. CI fails the build if `service_role` or `GEMINI_API_KEY` shows up in `dist/`.
+5. **GitHub Pages** for this repo: Settings → Pages → Source: GitHub Actions. Already described above.
+6. Email confirmation is controlled by the Supabase project. If it is on, the You page says to open the mail before a session exists.
+
+When those are set, the You page can create a cloud account, an upload is copied into the bucket, and Cinder Field can host a lobby. Signaling uses Supabase Realtime (included on the free plan). The match itself is WebRTC through `stun:stun.l.google.com:19302`, so the game packets are not stored. If the free quotas are hit, local play and local uploads keep working.
+
+Studio actions are `describe`, `ideas`, `search`, `recommend`, and `cover`. Cover art is requested from Gemini’s image model. If the model returns no image, the function says so and the card keeps its original cover. There is no paid image API in this repo.
+
+## Performance
+
+The WebGL match is its own chunk. `npm run build` writes gzip and brotli siblings for large static files. GitHub Pages compresses responses itself and ignores those siblings; a host that serves `.br` (Cloudflare Pages) can use them. Hashed files under `assets/` are safe to cache for a year. The service worker does not cache the Vite dev server.
