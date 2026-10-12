@@ -1,6 +1,8 @@
 import type { BrowseSort, GameRecord, SourceFilter } from '../types'
+import { runtimeOf } from './record'
 
 export const CHART_GENRES = [
+  'Mashup',
   'Simulator',
   'Shooter',
   'Puzzle',
@@ -12,6 +14,7 @@ export const CHART_GENRES = [
   'Strategy',
   'Idle',
   'Arcade',
+  'Sports',
 ] as const
 
 export function clampRating(n: number): number {
@@ -57,6 +60,10 @@ export function buildRails(
   if (continued.length) rails.push({ id: 'continue', title: 'Continue', games: continued })
   const liked = favorites.map((id) => byId.get(id)).filter((g): g is GameRecord => Boolean(g))
   if (liked.length) rails.push({ id: 'favorites', title: 'Saved', games: liked })
+  const mashups = games.filter(
+    (g) => g.mashup || g.genres.some((x) => x.toLowerCase() === 'mashup'),
+  )
+  if (mashups.length) rails.push({ id: 'mashups', title: 'Mashups', games: rankGames(mashups, ratings) })
   const recommended = rankGames(games, ratings).slice(0, 12)
   if (recommended.length) {
     rails.push({ id: 'recommended', title: 'Worth a look', games: recommended })
@@ -66,6 +73,7 @@ export function buildRails(
   const mine = games.filter((g) => mineIds.has(g.id))
   if (mine.length) rails.push({ id: 'yours', title: 'You published', games: mine })
   for (const genre of CHART_GENRES) {
+    if (genre === 'Mashup') continue
     const list = games.filter((g) => g.genres.some((x) => x.toLowerCase() === genre.toLowerCase()))
     if (list.length) {
       rails.push({ id: `genre-${genre}`, title: genre, games: rankGames(list, ratings) })
@@ -106,7 +114,15 @@ export function filterGames(
       return false
     }
     if (!text) return true
-    const hay = [game.title, game.author, game.blurb, game.description, ...game.genres]
+    const hay = [
+      game.title,
+      game.author,
+      game.blurb,
+      game.description,
+      game.mashup ?? '',
+      runtimeOf(game),
+      ...game.genres,
+    ]
       .join(' ')
       .toLowerCase()
     return hay.includes(text)

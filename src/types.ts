@@ -78,6 +78,12 @@ export type HtmlSource = {
   href: string
 }
 
+export type WasmSource = {
+  kind: 'wasm'
+  entry: string
+  href: string
+}
+
 export type UploadSource = {
   kind: 'upload'
   entry: string
@@ -93,7 +99,7 @@ export type StageSource = {
   stage: 'cinder-field'
 }
 
-export type GameSource = GithubSource | HtmlSource | UploadSource | CartSource | StageSource
+export type GameSource = GithubSource | HtmlSource | UploadSource | CartSource | WasmSource | StageSource
 
 export type GameRecord = {
   id: string
@@ -107,6 +113,8 @@ export type GameRecord = {
   palette: Pick<Palette, 'bg' | 'paper' | 'accent'>
   house?: boolean
   bytes: number
+  mashup?: string
+  controls?: string
   rating?: number
   visits?: number
   source: GameSource

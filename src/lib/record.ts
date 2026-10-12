@@ -1,4 +1,5 @@
 import type { GameRecord, GameSpec, GameSource, SourceFilter } from '../types'
+import { publicUrl } from './base'
 import { cartBytes } from './cart'
 import { ENGINE_GENRE_MAP } from './genres'
 
@@ -33,6 +34,40 @@ export function sourceKind(source: GameSource): SourceFilter {
   return 'house'
 }
 
+export function runtimeOf(game: GameRecord): 'html' | 'wasm' | 'cart' | 'github' | 'upload' | 'stage' {
+  switch (game.source.kind) {
+    case 'wasm':
+      return 'wasm'
+    case 'html':
+      return 'html'
+    case 'cart':
+      return 'cart'
+    case 'github':
+      return 'github'
+    case 'upload':
+      return 'upload'
+    case 'stage':
+      return 'stage'
+  }
+}
+
+export function runtimeLabel(game: GameRecord): string {
+  switch (runtimeOf(game)) {
+    case 'wasm':
+      return 'WebAssembly'
+    case 'html':
+      return 'HTML'
+    case 'cart':
+      return 'Cart'
+    case 'github':
+      return 'GitHub'
+    case 'upload':
+      return 'Upload'
+    case 'stage':
+      return 'WebGL2'
+  }
+}
+
 export function sourceLabel(source: GameSource): string {
   switch (source.kind) {
     case 'github':
@@ -41,6 +76,8 @@ export function sourceLabel(source: GameSource): string {
       return 'Uploaded build'
     case 'html':
       return 'On-site build'
+    case 'wasm':
+      return 'WebAssembly'
     case 'stage':
       return 'WebGL · this tab'
     default:
@@ -51,8 +88,8 @@ export function sourceLabel(source: GameSource): string {
 export function playUrlFor(game: GameRecord): string | undefined {
   const { source } = game
   if (source.kind === 'github') return source.playUrl
-  if (source.kind === 'html') return source.href
-  if (source.kind === 'upload') return `/local-game/${encodeURIComponent(game.id)}/${source.entry}`
+  if (source.kind === 'html' || source.kind === 'wasm') return source.href
+  if (source.kind === 'upload') return publicUrl(`local-game/${encodeURIComponent(game.id)}/${source.entry}`)
   return undefined
 }
 

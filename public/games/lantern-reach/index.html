@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lantern Reach</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0e1c2f; color: #f8f1de; overflow: hidden; font-family: Georgia, serif; }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+      .hud {
+        position: fixed; top: 12px; left: 14px; right: 14px;
+        display: flex; justify-content: space-between;
+        font: 13px ui-monospace, monospace; color: #f6d37a; pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hud"><span id="d">0 m</span><span>D F J K</span></div>
+    <canvas id="c"></canvas>
+    <script>
+      const canvas = document.getElementById('c')
+      const ctx = canvas.getContext('2d')
+      const colors = ['#ffb703', '#2ec4b6', '#c9b6ff', '#ff7a6e']
+      let W = 1, H = 1, dpr = 1
+      let notes = []
+      let lane = 1
+      let lanePos = 1
+      let dist = 0
+      let glow = 100
+      let combo = 0
+      let dead = false
+      let spawn = 0.4
+      let scroll = 0
+      let speed = 210
+      let started = false
+
+      function resize() {
+        dpr = Math.min(2, devicePixelRatio || 1)
+        W = canvas.width = Math.floor(innerWidth * dpr)
+        H = canvas.height = Math.floor(innerHeight * dpr)
+        canvas.style.width = innerWidth + 'px'
+        canvas.style.height = innerHeight + 'px'
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      }
+      addEventListener('resize', resize)
+      resize()
+
+      function river() {
+        const width = Math.min(innerWidth * 0.78, 520)
+        return { x: (innerWidth - width) / 2, w: width }
+      }
+      function laneX(i) {
+        const r = river()
+        return r.x + ((i + 0.5) * r.w) / 4
+      }
+      function hitY() { return innerHeight * 0.78 }
+
+      function press(index) {
+        if (dead) {
+          notes = []
+          lane = 1
+          lanePos = 1
+          dist = 0
+          glow = 100
+          combo = 0
+          dead = false
+          spawn = 0.4
+          speed = 210
+          started = true
+          return
+        }
+        started = true
+        const y = hitY()
+        let best = null
+        let bestD = 48
+        for (const note of notes) {
+          if (note.lane !== index || note.done) continue
+          const d = Math.abs(note.y - y)
+          if (d < bestD) { best = note; bestD = d }
+        }
+        lane = index
+        if (!best) {
+          combo = 0
+          glow = Math.max(0, glow - 10)
+          return
+        }
+        best.done = true
+        combo += 1
+        glow = Math.min(100, glow + (bestD < 18 ? 12 : 6))
+      }
+
+      addEventListener('keydown', (e) => {
+        const k = e.key.toLowerCase()
+        const map = { d: 0, f: 1, j: 2, k: 3, arrowleft: 0, arrowup: 1, arrowdown: 2, arrowright: 3 }
+        if (k in map) {
+          e.preventDefault()
+          press(map[k])
+        } else if (k === 'r') press(lane)
+      })
+      canvas.addEventListener('pointerdown', (e) => {
+        const rect = canvas.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const r = river()
+        if (x < r.x || x > r.x + r.w) return
+        const index = Math.max(0, Math.min(3, Math.floor(((x - r.x) / r.w) * 4)))
+        press(index)
+      })
+
+      let prev = 0
+      function loop(now) {
+        const dt = Math.min(0.033, (now - (prev || now)) / 1000)
+        prev = now
+        const r = river()
+        const yHit = hitY()
+        if (started && !dead) {
+          speed = Math.min(420, 210 + dist / 40)
+          dist += speed * dt * 0.08
+          scroll += speed * dt
+          spawn -= dt
+          if (spawn <= 0) {
+            spawn = Math.max(0.42, 0.95 - dist / 800)
+            notes.push({ lane: Math.floor(Math.random() * 4), y: -20, done: false })
+          }
+          for (const note of notes) note.y += speed * dt
+          for (const note of notes) {
+            if (!note.done && note.y > yHit + 46) {
+              note.done = true
+              combo = 0
+              glow -= 16
+            }
+          }
+          notes = notes.filter((n) => n.y < innerHeight + 40)
+          glow = Math.max(0, glow - dt * 2.2)
+          if (glow <= 0) dead = true
+        }
+        lanePos += (lane - lanePos) * Math.min(1, dt * 8)
+
+        ctx.fillStyle = '#0e1c2f'
+        ctx.fillRect(0, 0, innerWidth, innerHeight)
+        ctx.fillStyle = '#163454'
+        round(r.x, 0, r.w, innerHeight, 28)
+        ctx.strokeStyle = 'rgba(232, 244, 255, 0.18)'
+        ctx.lineWidth = 2
+        ctx.setLineDash([10, 18])
+        ctx.lineDashOffset = -scroll * 0.2
+        for (let i = 1; i < 4; i++) {
+          const x = r.x + (i * r.w) / 4
+          ctx.beginPath()
+          ctx.moveTo(x, 0)
+          ctx.lineTo(x, innerHeight)
+          ctx.stroke()
+        }
+        ctx.setLineDash([])
+
+        ctx.strokeStyle = 'rgba(255, 244, 214, 0.35)'
+        ctx.beginPath()
+        ctx.moveTo(r.x + 8, yHit)
+        ctx.lineTo(r.x + r.w - 8, yHit)
+        ctx.stroke()
+
+        for (const note of notes) {
+          if (note.done) continue
+          const x = laneX(note.lane)
+          ctx.fillStyle = colors[note.lane]
+          ctx.beginPath()
+          ctx.moveTo(x, note.y - 16)
+          ctx.lineTo(x + 14, note.y)
+          ctx.lineTo(x, note.y + 16)
+          ctx.lineTo(x - 14, note.y)
+          ctx.closePath()
+          ctx.fill()
+        }
+
+        const lx = laneX(lanePos)
+        const ly = yHit + 28
+        const g = ctx.createRadialGradient(lx, ly - 8, 4, lx, ly - 8, 70 * (0.45 + glow / 180))
+        g.addColorStop(0, 'rgba(255, 214, 120, 0.95)')
+        g.addColorStop(1, 'rgba(255, 160, 40, 0)')
+        ctx.fillStyle = g
+        ctx.beginPath()
+        ctx.arc(lx, ly - 10, 68, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#f6d37a'
+        ctx.beginPath()
+        ctx.moveTo(lx - 18, ly)
+        ctx.lineTo(lx + 18, ly)
+        ctx.lineTo(lx + 10, ly + 16)
+        ctx.lineTo(lx - 10, ly + 16)
+        ctx.closePath()
+        ctx.fill()
+        ctx.fillStyle = '#ffb703'
+        ctx.beginPath()
+        ctx.arc(lx, ly - 8, 10, 0, Math.PI * 2)
+        ctx.fill()
+
+        ctx.fillStyle = '#f8f1de'
+        ctx.font = '13px ui-monospace, monospace'
+        document.getElementById('d').textContent = dead
+          ? 'Glow out at ' + Math.floor(dist) + ' m · tap to retry'
+          : Math.floor(dist) + ' m · glow ' + Math.floor(glow) + (combo > 1 ? ' · x' + combo : '')
+
+        if (!started) {
+          ctx.fillStyle = 'rgba(8, 16, 28, 0.45)'
+          ctx.fillRect(0, 0, innerWidth, innerHeight)
+          ctx.fillStyle = '#f8f1de'
+          ctx.font = '600 28px Georgia, serif'
+          ctx.textAlign = 'center'
+          ctx.fillText('Tap a lane as the buoy arrives', innerWidth / 2, innerHeight * 0.42)
+          ctx.font = '14px ui-monospace, monospace'
+          ctx.fillText('D   F   J   K', innerWidth / 2, innerHeight * 0.42 + 36)
+          ctx.textAlign = 'left'
+        }
+        requestAnimationFrame(loop)
+      }
+
+      function round(x, y, w, h, rad) {
+        ctx.beginPath()
+        ctx.moveTo(x + rad, y)
+        ctx.arcTo(x + w, y, x + w, y + h, rad)
+        ctx.arcTo(x + w, y + h, x, y + h, rad)
+        ctx.arcTo(x, y + h, x, y, rad)
+        ctx.arcTo(x, y, x + w, y, rad)
+        ctx.closePath()
+        ctx.fill()
+      }
+      requestAnimationFrame(loop)
+    </script>
+  </body>
+</html>

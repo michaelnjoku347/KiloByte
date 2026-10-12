@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Plot Puck</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #16301c; color: #f4f7ef; font-family: Georgia, serif; overflow: hidden; }
+      canvas { display: block; width: 100%; height: 100%; }
+      .hud {
+        position: fixed; top: 10px; left: 14px; right: 14px;
+        display: flex; justify-content: space-between; gap: 12px; align-items: center;
+        font: 13px ui-monospace, monospace; color: #e7f6d8; pointer-events: none;
+      }
+      button {
+        pointer-events: auto; font: inherit; border: 0; border-radius: 999px;
+        background: #f2d16b; color: #1c1408; padding: 8px 14px; font-weight: 700; cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hud">
+      <span id="stat">Plant a plot, then launch</span>
+      <button id="go" type="button">Launch seed</button>
+    </div>
+    <canvas id="c"></canvas>
+    <script>
+      const canvas = document.getElementById('c')
+      const ctx = canvas.getContext('2d')
+      const stat = document.getElementById('stat')
+      const COLS = 7
+      const ROWS = 8
+      const plots = Array.from({ length: ROWS }, () => Array(COLS).fill(0))
+      let seeds = 6
+      let score = 0
+      let launches = 0
+      const MAX_LAUNCH = 3
+      let phase = 'plant'
+      let ball = null
+      let settle = 0
+      let W = 1, H = 1
+
+      function resize() {
+        const dpr = Math.min(2, window.devicePixelRatio || 1)
+        W = canvas.width = Math.floor(innerWidth * dpr)
+        H = canvas.height = Math.floor(innerHeight * dpr)
+        canvas.style.width = innerWidth + 'px'
+        canvas.style.height = innerHeight + 'px'
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      }
+      addEventListener('resize', resize)
+      resize()
+
+      function view() {
+        return { left: 18, top: 58, right: Math.min(118, innerWidth * 0.22), bottom: 16 }
+      }
+      function cell(c, r) {
+        const v = view()
+        const gw = innerWidth - v.left - v.right
+        const gh = innerHeight - v.top - v.bottom
+        return { x: v.left + (c * gw) / COLS, y: v.top + (r * gh) / ROWS, w: gw / COLS, h: gh / ROWS }
+      }
+      function glass() {
+        const v = view()
+        return { x: innerWidth - v.right + 8, y: innerHeight * 0.28, w: v.right - 18, h: innerHeight * 0.42 }
+      }
+
+      function plantAt(px, py) {
+        if (phase === 'done' || seeds <= 0) return
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const box = cell(c, r)
+            if (px >= box.x && px <= box.x + box.w && py >= box.y && py <= box.y + box.h) {
+              if (plots[r][c]) return
+              plots[r][c] = 1
+              seeds -= 1
+              return
+            }
+          }
+        }
+      }
+
+      function launch() {
+        if (phase === 'done') {
+          for (let r = 0; r < ROWS; r++) plots[r].fill(0)
+          seeds = 6
+          score = 0
+          launches = 0
+          phase = 'plant'
+          ball = null
+          return
+        }
+        if (ball) return
+        const v = view()
+        ball = { x: v.left + (innerWidth - v.left - v.right) * 0.5, y: v.top + 16, vx: 40, vy: 20, r: 9 }
+        phase = 'play'
+        settle = 0
+      }
+
+      canvas.addEventListener('pointerdown', (e) => {
+        const rect = canvas.getBoundingClientRect()
+        plantAt(e.clientX - rect.left, e.clientY - rect.top)
+      })
+      document.getElementById('go').addEventListener('click', launch)
+      addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault()
+          launch()
+        }
+      })
+
+      function hitRect(b, box, rest, kick) {
+        const nx = Math.max(box.x, Math.min(b.x, box.x + box.w))
+        const ny = Math.max(box.y, Math.min(b.y, box.y + box.h))
+        let dx = b.x - nx
+        let dy = b.y - ny
+        const d2 = dx * dx + dy * dy
+        if (d2 > b.r * b.r) return false
+        if (d2 < 0.01) {
+          const left = b.x - box.x
+          const right = box.x + box.w - b.x
+          const top = b.y - box.y
+          const bot = box.y + box.h - b.y
+          const m = Math.min(left, right, top, bot)
+          if (m === left) { b.x = box.x - b.r; b.vx = -Math.abs(b.vx) * rest }
+          else if (m === right) { b.x = box.x + box.w + b.r; b.vx = Math.abs(b.vx) * rest }
+          else if (m === top) { b.y = box.y - b.r; b.vy = -Math.abs(b.vy) * rest - kick }
+          else { b.y = box.y + box.h + b.r; b.vy = Math.abs(b.vy) * rest }
+          return true
+        }
+        const d = Math.sqrt(d2) || 1
+        dx /= d
+        dy /= d
+        const pen = b.r - d
+        b.x += dx * (pen + 0.4)
+        b.y += dy * (pen + 0.4)
+        const vel = b.vx * dx + b.vy * dy
+        if (vel < 0) {
+          b.vx -= (1 + rest) * vel * dx
+          b.vy -= (1 + rest) * vel * dy
+          if (dy < -0.4) b.vy -= kick
+        }
+        return true
+      }
+
+      function endLaunch(goal) {
+        if (goal) score += 1
+        launches += 1
+        ball = null
+        phase = launches >= MAX_LAUNCH ? 'done' : 'plant'
+      }
+
+      let prev = 0
+      function loop(now) {
+        const dt = Math.min(0.033, (now - (prev || now)) / 1000)
+        prev = now
+        const v = view()
+        if (ball) {
+          ball.vy += 920 * dt
+          ball.x += ball.vx * dt
+          ball.y += ball.vy * dt
+          const right = innerWidth - v.right
+          const bottom = innerHeight - v.bottom
+          if (ball.x < v.left + ball.r) { ball.x = v.left + ball.r; ball.vx = Math.abs(ball.vx) * 0.9 }
+          if (ball.y < v.top + ball.r) { ball.y = v.top + ball.r; ball.vy = Math.abs(ball.vy) * 0.8 }
+          if (ball.y > bottom - ball.r) { ball.y = bottom - ball.r; ball.vy = -Math.abs(ball.vy) * 0.45 }
+          const gh = glass()
+          if (ball.x + ball.r > gh.x && ball.y > gh.y && ball.y < gh.y + gh.h && ball.x < gh.x + gh.w) {
+            endLaunch(true)
+          } else if (ball.x > right - ball.r) {
+            ball.x = right - ball.r
+            ball.vx = -Math.abs(ball.vx) * 0.85
+          }
+          if (ball) {
+            for (let r = 0; r < ROWS; r++) {
+              for (let c = 0; c < COLS; c++) {
+                const box = cell(c, r)
+                const planted = plots[r][c] === 1
+                const pad = planted ? 3 : 6
+                hitRect(ball, {
+                  x: box.x + pad,
+                  y: box.y + pad,
+                  w: box.w - pad * 2,
+                  h: box.h - pad * 2,
+                }, planted ? 0.92 : 0.28, planted ? 90 : 0)
+              }
+            }
+            const speed = Math.hypot(ball.vx, ball.vy)
+            if (speed < 46 && ball.y > innerHeight * 0.45) settle += dt
+            else settle = 0
+            if (settle > 1.15 || ball.y > innerHeight + 30) endLaunch(false)
+          }
+        }
+
+        const w = innerWidth
+        const h = innerHeight
+        const sky = ctx.createLinearGradient(0, 0, 0, h)
+        sky.addColorStop(0, '#d7f2c8')
+        sky.addColorStop(0.45, '#8fbf78')
+        sky.addColorStop(1, '#2f5d34')
+        ctx.fillStyle = sky
+        ctx.fillRect(0, 0, w, h)
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const box = cell(c, r)
+            ctx.fillStyle = (r + c) % 2 === 0 ? '#6b4428' : '#7a5132'
+            round(box.x + 3, box.y + 3, box.w - 6, box.h - 6, 8)
+            if (plots[r][c]) {
+              ctx.fillStyle = '#3f8f45'
+              ctx.beginPath()
+              ctx.ellipse(box.x + box.w / 2, box.y + box.h * 0.62, box.w * 0.28, box.h * 0.18, 0, 0, Math.PI * 2)
+              ctx.fill()
+              ctx.fillStyle = '#7dce6a'
+              ctx.beginPath()
+              ctx.ellipse(box.x + box.w * 0.38, box.y + box.h * 0.42, box.w * 0.16, box.h * 0.12, -0.6, 0, Math.PI * 2)
+              ctx.ellipse(box.x + box.w * 0.62, box.y + box.h * 0.4, box.w * 0.16, box.h * 0.12, 0.6, 0, Math.PI * 2)
+              ctx.fill()
+            }
+          }
+        }
+
+        const gh = glass()
+        ctx.fillStyle = 'rgba(183, 228, 199, 0.45)'
+        ctx.strokeStyle = '#1f4d32'
+        ctx.lineWidth = 4
+        round(gh.x, gh.y, gh.w, gh.h, 10)
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.moveTo(gh.x + 8, gh.y + 10)
+        ctx.lineTo(gh.x + gh.w - 8, gh.y + gh.h * 0.45)
+        ctx.stroke()
+        ctx.fillStyle = '#143322'
+        ctx.font = '12px ui-monospace, monospace'
+        ctx.fillText('GLASS', gh.x + 8, gh.y + gh.h + 16)
+
+        const sprX = v.left + (w - v.left - v.right) * 0.5
+        ctx.fillStyle = '#245c34'
+        ctx.fillRect(sprX - 16, 46, 32, 10)
+        if (!ball && phase !== 'done') {
+          ctx.fillStyle = '#f2d16b'
+          ctx.beginPath()
+          ctx.arc(sprX, 70, 9, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        if (ball) {
+          ctx.fillStyle = '#f2d16b'
+          ctx.beginPath()
+          ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.fillStyle = '#fff6d0'
+          ctx.beginPath()
+          ctx.arc(ball.x - 3, ball.y - 3, 2.5, 0, Math.PI * 2)
+          ctx.fill()
+        }
+
+        if (phase === 'done') {
+          ctx.fillStyle = 'rgba(18, 40, 22, 0.72)'
+          ctx.fillRect(0, 0, w, h)
+          ctx.fillStyle = '#f4f7ef'
+          ctx.font = '600 42px Georgia, serif'
+          ctx.textAlign = 'center'
+          ctx.fillText(score + ' in the glass', w / 2, h / 2)
+          ctx.font = '16px ui-monospace, monospace'
+          ctx.fillText('Launch again to replant', w / 2, h / 2 + 36)
+          ctx.textAlign = 'left'
+        }
+
+        const label = phase === 'done'
+          ? score + ' goals'
+          : seeds + ' plots left · ' + score + '/' + MAX_LAUNCH + ' in the glass'
+        stat.textContent = label
+        document.getElementById('go').textContent = phase === 'done' ? 'Replant' : 'Launch seed'
+        requestAnimationFrame(loop)
+      }
+
+      function round(x, y, w, h, r) {
+        ctx.beginPath()
+        ctx.moveTo(x + r, y)
+        ctx.arcTo(x + w, y, x + w, y + h, r)
+        ctx.arcTo(x + w, y + h, x, y + h, r)
+        ctx.arcTo(x, y + h, x, y, r)
+        ctx.arcTo(x, y, x + w, y, r)
+        ctx.closePath()
+        ctx.fill()
+      }
+
+      // A couple of springy plots so the garden reads before the first click.
+      plots[4][2] = 1
+      plots[5][4] = 1
+      seeds = 4
+      requestAnimationFrame(loop)
+    </script>
+  </body>
+</html>

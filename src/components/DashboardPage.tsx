@@ -1,7 +1,7 @@
 import type { GameRecord } from '../types'
 import { formatBytes } from '../lib/cart'
 import { similarGames, shownRating } from '../lib/catalog'
-import { playUrlFor, sourceLabel } from '../lib/record'
+import { playUrlFor, runtimeLabel, sourceLabel } from '../lib/record'
 import { go } from '../lib/route'
 import { livePointer } from '../lib/pointer'
 import { GameCard } from './GameCard'
@@ -113,9 +113,21 @@ export function DashboardPage({
             <dd>{game.genres.join(', ') || '—'}</dd>
           </div>
           <div>
-            <dt>File</dt>
-            <dd>{game.source.kind === 'stage' ? 'WebGL2' : game.source.kind}</dd>
+            <dt>Runtime</dt>
+            <dd>{runtimeLabel(game)}</dd>
           </div>
+          {game.mashup && (
+            <div>
+              <dt>Mashup</dt>
+              <dd>{game.mashup}</dd>
+            </div>
+          )}
+          {game.controls && (
+            <div>
+              <dt>Controls</dt>
+              <dd>{game.controls}</dd>
+            </div>
+          )}
         </dl>
       </section>
 

@@ -1,8 +1,16 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { GameRecord } from '../types'
 import { CHART_GENRES, filterGames, rankGames, shownRating } from '../lib/catalog'
+import { runtimeOf } from '../lib/record'
 import { go } from '../lib/route'
 import { StarRating } from './StarRating'
+
+const RUNTIMES = [
+  { id: 'all', label: 'Any build' },
+  { id: 'html', label: 'HTML' },
+  { id: 'wasm', label: 'WASM' },
+  { id: 'cart', label: 'Cart' },
+] as const
 
 export function ChartsPage({
   all,
@@ -15,6 +23,7 @@ export function ChartsPage({
   genre?: string
   onPlay: (id: string) => void
 }) {
+  const [runtime, setRuntime] = useState<(typeof RUNTIMES)[number]['id']>('all')
   const list = useMemo(() => {
     const filtered = genre
       ? filterGames(
@@ -24,8 +33,10 @@ export function ChartsPage({
           ratings,
         )
       : all
-    return rankGames(filtered, ratings)
-  }, [all, genre, ratings])
+    const ranked = rankGames(filtered, ratings)
+    if (runtime === 'all') return ranked
+    return ranked.filter((game) => runtimeOf(game) === runtime)
+  }, [all, genre, ratings, runtime])
 
   return (
     <div className="page catalog-page">
@@ -58,8 +69,23 @@ export function ChartsPage({
           ))}
         </div>
       </div>
+      <div className="kind-index runtime-index" role="tablist" aria-label="Catalog runtime">
+        <p className="kind-label">Build</p>
+        <div className="kind-links">
+          {RUNTIMES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`kind-link ${runtime === item.id ? 'kind-on' : ''}`}
+              onClick={() => setRuntime(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
       {list.length === 0 ? (
-        <p className="empty">No games in this genre yet. Publish one from Make.</p>
+        <p className="empty">Nothing in this slice yet. Try another genre or build, or publish one from Make.</p>
       ) : (
         <table className="index-table">
           <caption className="sr-only">Games ranked by star rating</caption>
@@ -88,6 +114,7 @@ export function ChartsPage({
                     />
                     <span>
                       {game.title}
+                      {game.source.kind === 'wasm' && <span className="index-tag">WASM</span>}
                       <p className="index-blurb">{game.blurb}</p>
                     </span>
                   </button>
