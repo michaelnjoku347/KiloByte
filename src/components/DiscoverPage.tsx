@@ -1,11 +1,14 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import type { GameRecord } from '../types'
 import { CHART_GENRES, buildRails, featuredGame, filterGames, shownRating } from '../lib/catalog'
 import { go } from '../lib/route'
 import { livePointer } from '../lib/pointer'
 import { GameCard } from './GameCard'
 import { StarRating } from './StarRating'
-import { CinderField } from './CinderField'
+import { ageLabel } from '../lib/age'
+import { forYou } from '../lib/recommend'
+
+const CinderField = lazy(() => import('./CinderField').then((mod) => ({ default: mod.CinderField })))
 
 export function DiscoverPage({
   all,
@@ -13,6 +16,7 @@ export function DiscoverPage({
   ratings,
   recents,
   favorites,
+  plays,
   searchQuery,
   onPlay,
   onSave,
@@ -22,22 +26,32 @@ export function DiscoverPage({
   ratings: Record<string, number>
   recents: string[]
   favorites: string[]
+  plays: Record<string, number>
   searchQuery?: string
   onPlay: (id: string) => void
   onSave: (id: string) => void
 }) {
-  const flagship = all.find((game) => game.source.kind === 'stage')
+  const [age, setAge] = useState<'any' | 'all' | '10' | '13' | '16'>('any')
+  const visible = useMemo(
+    () => all.filter((game) => age === 'any' || (game.age ?? 'all') === age),
+    [all, age],
+  )
+  const flagship = visible.find((game) => game.source.kind === 'stage') ?? all.find((game) => game.source.kind === 'stage')
   const featured = flagship ?? featuredGame(all, ratings)
+  const picks = useMemo(
+    () => forYou(visible, plays, favorites, 6).filter((game) => game.id !== flagship?.id),
+    [visible, plays, favorites, flagship],
+  )
   const shelves = useMemo(
     () =>
-      buildRails(all, ratings, recents, mineIds, favorites)
+      buildRails(visible, ratings, recents, mineIds, favorites)
         .filter((shelf) => !shelf.id.startsWith('genre-'))
         .map((shelf) =>
           shelf.id === 'recommended' && flagship
             ? { ...shelf, games: shelf.games.filter((game) => game.id !== flagship.id) }
             : shelf,
         ),
-    [all, ratings, recents, mineIds, favorites, flagship],
+    [visible, ratings, recents, mineIds, favorites, flagship],
   )
   const results = useMemo(
     () =>
@@ -93,7 +107,9 @@ export function DiscoverPage({
         <section className="lead lead-stage">
           <div className="lead-spread">
             <div className="lead-stage-view">
-              <CinderField mode="preview" />
+              <Suspense fallback={<div className="cinder-preview" aria-busy="true" />}>
+                <CinderField mode="preview" />
+              </Suspense>
               <button
                 type="button"
                 className="lead-stage-hit"
@@ -107,8 +123,8 @@ export function DiscoverPage({
               <p className="lede">{featured.blurb}</p>
               <p className="stage-specs">
                 <span>WebGL2</span>
-                <span>Mouse look</span>
-                <span>Your GPU</span>
+                <span>Versus bots</span>
+                <span>{ageLabel(featured.age)}</span>
               </p>
               <p className="meter-line lead-rating">
                 <span>{featured.genres.join(' · ')}</span>
@@ -182,6 +198,23 @@ export function DiscoverPage({
         </ol>
       </section>
 
+      <nav className="kind-index" aria-label="Age tags">
+        <p className="kind-label">Age</p>
+        <div className="kind-links">
+          {([
+            ['any', 'All ages'],
+            ['all', 'Everyone'],
+            ['10', '10+'],
+            ['13', '13+'],
+            ['16', '16+'],
+          ] as const).map(([id, label]) => (
+            <button key={id} type="button" className={`kind-link${age === id ? ' on' : ''}`} onClick={() => setAge(id)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
       <nav className="kind-index" aria-label="Game genres">
         <p className="kind-label">Browse</p>
         <div className="kind-links">
@@ -192,6 +225,29 @@ export function DiscoverPage({
           ))}
         </div>
       </nav>
+
+      {picks.length > 0 && (
+        <section className="shelf" data-rail="for-you">
+          <header className="shelf-head">
+            <h2>For you</h2>
+            <p className="meter-line">From games you played and saved on this device. Not a model.</p>
+          </header>
+          <div className="shelf-grid">
+            {picks.map((game, i) => (
+              <GameCard
+                key={game.id}
+                game={game}
+                rating={shownRating(game, ratings)}
+                favorited={favorites.includes(game.id)}
+                compact
+                stagger={i}
+                onPlay={() => onPlay(game.id)}
+                onSave={() => onSave(game.id)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {shelves.map((shelf) => (
         <section key={shelf.id} className="shelf" data-rail={shelf.id}>

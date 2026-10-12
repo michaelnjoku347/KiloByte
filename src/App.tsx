@@ -281,6 +281,7 @@ function App() {
             ratings={catalog.ratings}
             recents={catalog.recents}
             favorites={catalog.favorites}
+            plays={catalog.plays}
             onPlay={play}
             onSave={catalog.toggleFavorite}
           />
@@ -292,6 +293,7 @@ function App() {
             ratings={catalog.ratings}
             recents={catalog.recents}
             favorites={catalog.favorites}
+            plays={catalog.plays}
             searchQuery={route.query}
             onPlay={play}
             onSave={catalog.toggleFavorite}

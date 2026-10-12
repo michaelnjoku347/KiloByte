@@ -350,6 +350,43 @@ function writeBox(
   return cursor
 }
 
+export type BodyDraw = {
+  x: number
+  z: number
+  yaw: number
+  rgb: [number, number, number]
+  kind: 'body' | 'gun'
+}
+
+export function fillBodyMesh(bodies: BodyDraw[], positions: Float32Array, colors: Float32Array): number {
+  let cursor = 0
+  for (const body of bodies) {
+    if (body.kind === 'gun') {
+      const fx = Math.sin(body.yaw)
+      const fz = Math.cos(body.yaw)
+      const rx = Math.cos(body.yaw)
+      const rz = -Math.sin(body.yaw)
+      const x = body.x + fx * 0.62 + rx * 0.26
+      const z = body.z + fz * 0.62 + rz * 0.26
+      cursor = writeBox(positions, colors, cursor, x - 0.05, 0.95, z - 0.05, x + 0.07, 1.12, z + 0.32, body.rgb)
+      continue
+    }
+    cursor = writeBox(
+      positions,
+      colors,
+      cursor,
+      body.x - 0.28,
+      0,
+      body.z - 0.28,
+      body.x + 0.28,
+      1.65,
+      body.z + 0.28,
+      body.rgb,
+    )
+  }
+  return cursor
+}
+
 export function fillEmberMesh(
   shards: Shard[],
   collected: boolean[],

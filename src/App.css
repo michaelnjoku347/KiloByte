@@ -295,7 +295,7 @@ h2 {
 .primary-btn,
 .play-btn {
   background: var(--ember);
-  color: var(--play-face);
+  color: #1c140f;
   box-shadow: 0 10px 24px color-mix(in srgb, var(--ember) 32%, transparent);
 }
 
@@ -691,6 +691,104 @@ h2 {
   color: var(--on-plate);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
+}
+
+.dossier-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dossier-poster {
+  position: relative;
+  overflow: hidden;
+}
+
+.dossier-poster i,
+.dossier-poster span {
+  position: relative;
+  z-index: 1;
+}
+
+.plate-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.plate-kind,
+.plate-mark,
+.plate-runtime,
+.age-pill,
+.plate-rank {
+  position: relative;
+  z-index: 1;
+}
+
+.age-pill {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(12, 14, 18, 0.55);
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.kind-link.on {
+  background: var(--ember);
+  color: #1c140f;
+}
+
+.match-hud {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 4;
+  display: flex;
+  gap: 14px;
+  color: #fff;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.match-end {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  background: rgba(8, 8, 12, 0.55);
+  color: #fff;
+  text-align: center;
+}
+
+.match-end ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stage-gate small {
+  display: block;
+  max-width: 36ch;
+  margin: 8px auto 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.idea-list p {
+  margin: 0 0 10px;
 }
 
 .plate-kind {

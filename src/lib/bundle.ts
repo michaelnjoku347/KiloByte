@@ -6,7 +6,7 @@ export type BundleFile = {
   data: ArrayBuffer
 }
 
-export const MAX_BUNDLE_BYTES = 25 * 1024 * 1024
+export const MAX_BUNDLE_BYTES = 40 * 1024 * 1024
 
 const MIME: Record<string, string> = {
   html: 'text/html;charset=utf-8',
@@ -70,7 +70,7 @@ export async function filesFromZip(buffer: ArrayBuffer): Promise<BundleFile[]> {
     if (!path) continue
     const bytes = unzipped[raw]
     total += bytes.byteLength
-    if (total > MAX_BUNDLE_BYTES) throw new Error('Bundle is over 25 MB.')
+    if (total > MAX_BUNDLE_BYTES) throw new Error('Bundle is over 40 MB.')
     const copy = new ArrayBuffer(bytes.byteLength)
     new Uint8Array(copy).set(bytes)
     files.push({ path, type: mimeFor(path), data: copy })
@@ -93,7 +93,7 @@ export async function filesFromList(list: File[]): Promise<BundleFile[]> {
     const path = normalizePath(strip(item.path))
     if (!path) continue
     total += item.file.size
-    if (total > MAX_BUNDLE_BYTES) throw new Error('Bundle is over 25 MB.')
+    if (total > MAX_BUNDLE_BYTES) throw new Error('Bundle is over 40 MB.')
     files.push({ path, type: item.file.type || mimeFor(path), data: await item.file.arrayBuffer() })
   }
   return files
